@@ -1,0 +1,103 @@
+{
+    "id": "oil_change",
+    "name": "Oil and Filter Change",
+    "description": "Change engine oil and replace oil filter on GM LS Gen IV engines",
+    "engineId": "gm_ls_gen4",
+    "estimatedTime": "20-30 minutes",
+    "difficulty": "beginner",
+    "tools": [
+        "15mm socket or wrench",
+        "Oil filter wrench",
+        "Drain pan",
+        "Funnel",
+        "Rags or shop towels"
+    ],
+    "steps": [
+        {
+            "id": 1,
+            "action": "Position drain pan under oil drain plug",
+            "details": "Locate the oil drain plug on the bottom of the oil pan. Position your drain pan directly underneath, accounting for the angle of oil flow.",
+            "partId": "oil_pan",
+            "tools": ["Drain pan"],
+            "warnings": ["If engine is warm, oil will be hot - use caution", "Ensure drain pan is large enough (6+ quarts)"],
+            "requires": [],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 2,
+            "action": "Remove oil drain plug",
+            "details": "Using a 15mm socket or wrench, loosen and remove the drain plug. Be prepared for oil to flow immediately. Allow all oil to drain completely - this may take several minutes.",
+            "partId": "oil_pan",
+            "tools": ["15mm socket or wrench"],
+            "warnings": ["Hot oil can cause burns", "Don't drop the drain plug into the pan"],
+            "requires": [1],
+            "torqueSpec": {
+                "value": 18,
+                "unit": "ft-lbs",
+                "note": "Apply on reinstall"
+            },
+            "media": null
+        },
+        {
+            "id": 3,
+            "action": "Remove old oil filter",
+            "details": "While oil is draining, locate the oil filter. Using an oil filter wrench if needed, turn the filter counterclockwise to remove. Some oil will spill from the filter - have rags ready.",
+            "partId": "oil_filter",
+            "tools": ["Oil filter wrench", "Rags or shop towels"],
+            "warnings": ["Filter may be tight - use proper wrench to avoid damage"],
+            "requires": [1],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 4,
+            "action": "Install new oil filter",
+            "details": "Apply a thin layer of fresh oil to the gasket on the new filter. Thread the new filter on by hand until the gasket contacts the mounting surface, then tighten an additional 3/4 turn by hand.",
+            "partId": "oil_filter",
+            "tools": [],
+            "warnings": ["Do not over-tighten - hand tight plus 3/4 turn only", "Verify old gasket is not stuck to engine"],
+            "requires": [3],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 5,
+            "action": "Reinstall drain plug",
+            "details": "Ensure drain plug washer is in good condition (replace if needed). Thread drain plug in by hand to prevent cross-threading, then torque to specification.",
+            "partId": "oil_pan",
+            "tools": ["15mm socket or wrench"],
+            "warnings": ["Do not over-torque - this can strip the oil pan threads"],
+            "requires": [2],
+            "torqueSpec": {
+                "value": 18,
+                "unit": "ft-lbs",
+                "note": "Use new washer if available"
+            },
+            "media": null
+        },
+        {
+            "id": 6,
+            "action": "Add new oil",
+            "details": "Remove oil fill cap on valve cover. Using a funnel, add the specified amount of oil (typically 6 quarts for LS engines). Check your owner's manual for exact capacity and oil specification.",
+            "partId": "valve_cover",
+            "tools": ["Funnel"],
+            "warnings": ["Do not overfill - check level with dipstick", "Use oil meeting GM specification (typically 5W-30 dexos1)"],
+            "requires": [4, 5],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 7,
+            "action": "Verify oil level and check for leaks",
+            "details": "Replace fill cap. Start engine and let it run for 30 seconds, then shut off. Wait 2 minutes for oil to settle, then check level with dipstick. Add oil if needed. Inspect drain plug and filter for leaks.",
+            "partId": "oil_filter",
+            "tools": [],
+            "warnings": ["Check for leaks before driving"],
+            "requires": [6],
+            "torqueSpec": null,
+            "media": null
+        }
+    ],
+    "reinstallNotes": "Dispose of old oil properly at a recycling center or auto parts store. Reset oil life monitor if equipped. Record mileage and date of oil change for your records."
+}

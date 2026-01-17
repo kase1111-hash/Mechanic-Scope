@@ -1,0 +1,170 @@
+{
+    "parts": [
+        {
+            "id": "alternator_gm_ls",
+            "name": "Alternator",
+            "description": "Generates electrical power to charge the battery and run electrical systems while the engine is running.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": ["AC Delco 334-2529", "Denso 210-5369"],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Output", "value": "145 amps"},
+                {"key": "Voltage", "value": "12V"},
+                {"key": "Mounting Bolt Torque", "value": "37 ft-lbs"}
+            ]
+        },
+        {
+            "id": "battery_negative",
+            "name": "Negative Battery Terminal",
+            "description": "Ground connection for the vehicle's electrical system. Always disconnect first when working on electrical components.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Terminal Size", "value": "10mm nut"},
+                {"key": "Cable Gauge", "value": "4 AWG"}
+            ]
+        },
+        {
+            "id": "serpentine_belt",
+            "name": "Serpentine Belt",
+            "description": "Single belt that drives all engine accessories including alternator, power steering pump, water pump, and A/C compressor.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": ["Gates K060925", "Dayco 5060930"],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Length", "value": "92.5 inches"},
+                {"key": "Ribs", "value": "6"},
+                {"key": "Replacement Interval", "value": "60,000-100,000 miles"}
+            ]
+        },
+        {
+            "id": "alternator_connector",
+            "name": "Alternator Electrical Connector",
+            "description": "Main power output connector for the alternator. Carries charging current to the battery and vehicle systems.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Pin Count", "value": "4-pin"},
+                {"key": "Connector Type", "value": "Weatherpack"}
+            ]
+        },
+        {
+            "id": "starter_motor",
+            "name": "Starter Motor",
+            "description": "High-torque electric motor that cranks the engine for starting. Engages with the flywheel/flexplate ring gear.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": ["AC Delco 337-1023", "Denso 280-4298"],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Power", "value": "1.4 kW"},
+                {"key": "Mounting Bolt Torque", "value": "37 ft-lbs"},
+                {"key": "Bolt Size", "value": "10mm x 1.5"}
+            ]
+        },
+        {
+            "id": "throttle_body",
+            "name": "Throttle Body",
+            "description": "Electronic throttle body controlling airflow into the engine. Drive-by-wire system with integrated position sensors.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": ["AC Delco 217-3151"],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Bore Size", "value": "87mm (90mm on LS3)"},
+                {"key": "Type", "value": "Electronic (Drive-by-Wire)"},
+                {"key": "Mounting Bolt Torque", "value": "89 in-lbs"}
+            ]
+        },
+        {
+            "id": "intake_manifold",
+            "name": "Intake Manifold",
+            "description": "Distributes air from the throttle body to each cylinder. LS engines use a composite or aluminum design.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Material", "value": "Composite (truck) / Aluminum (car)"},
+                {"key": "Bolt Torque", "value": "44 in-lbs (first pass), 89 in-lbs (final)"},
+                {"key": "Bolt Pattern", "value": "10 bolts"}
+            ]
+        },
+        {
+            "id": "oil_filter",
+            "name": "Oil Filter",
+            "description": "Filters contaminants from engine oil. Replace with every oil change.",
+            "category": "fluid",
+            "imagePath": null,
+            "crossReferences": ["AC Delco PF48", "Mobil 1 M1-110", "Fram PH3506"],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Thread Size", "value": "13/16-16"},
+                {"key": "Filter Type", "value": "Spin-on"},
+                {"key": "Installation", "value": "Hand tight + 3/4 turn"}
+            ]
+        },
+        {
+            "id": "water_pump",
+            "name": "Water Pump",
+            "description": "Circulates coolant through the engine and radiator. Driven by the serpentine belt.",
+            "category": "fluid",
+            "imagePath": null,
+            "crossReferences": ["AC Delco 251-748", "Gates 45006"],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Type", "value": "Mechanical (belt-driven)"},
+                {"key": "Impeller", "value": "Stamped steel or composite"},
+                {"key": "Bolt Torque", "value": "11 ft-lbs (long), 18 ft-lbs (short)"}
+            ]
+        },
+        {
+            "id": "belt_tensioner",
+            "name": "Belt Tensioner",
+            "description": "Spring-loaded tensioner maintains proper serpentine belt tension. Includes pulley that contacts belt.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": ["AC Delco 38158", "Gates 38158"],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Wrench Size", "value": "15mm"},
+                {"key": "Rotation to Release", "value": "Clockwise"},
+                {"key": "Replacement Interval", "value": "Replace with belt if worn"}
+            ]
+        },
+        {
+            "id": "oil_pan",
+            "name": "Oil Pan",
+            "description": "Reservoir for engine oil at the bottom of the engine block.",
+            "category": "fluid",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Capacity", "value": "6 quarts (with filter)"},
+                {"key": "Drain Plug Size", "value": "15mm"},
+                {"key": "Drain Plug Torque", "value": "18 ft-lbs"}
+            ]
+        },
+        {
+            "id": "valve_cover",
+            "name": "Valve Cover",
+            "description": "Covers the valvetrain on top of the cylinder head. Contains oil fill cap and may house ignition coils.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["gm_ls_gen4"],
+            "specs": [
+                {"key": "Material", "value": "Composite or Aluminum"},
+                {"key": "Bolt Torque", "value": "106 in-lbs"},
+                {"key": "Gasket Type", "value": "Integrated rubber seal"}
+            ]
+        }
+    ]
+}

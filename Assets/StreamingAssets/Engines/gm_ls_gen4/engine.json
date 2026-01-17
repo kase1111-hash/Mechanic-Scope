@@ -1,0 +1,55 @@
+{
+    "id": "gm_ls_gen4",
+    "name": "GM LS Gen IV",
+    "manufacturer": "General Motors",
+    "years": "2007-2017",
+    "modelFile": "gm_ls_gen4.glb",
+    "thumbnail": "thumbnail.png",
+    "partMappings": [
+        {
+            "nodeNameInModel": "Alternator_Mesh",
+            "partId": "alternator_gm_ls"
+        },
+        {
+            "nodeNameInModel": "Battery_Negative_Terminal",
+            "partId": "battery_negative"
+        },
+        {
+            "nodeNameInModel": "Serpentine_Belt_Mesh",
+            "partId": "serpentine_belt"
+        },
+        {
+            "nodeNameInModel": "Alternator_Connector",
+            "partId": "alternator_connector"
+        },
+        {
+            "nodeNameInModel": "Starter_Motor_Mesh",
+            "partId": "starter_motor"
+        },
+        {
+            "nodeNameInModel": "Throttle_Body_Mesh",
+            "partId": "throttle_body"
+        },
+        {
+            "nodeNameInModel": "Intake_Manifold_Mesh",
+            "partId": "intake_manifold"
+        },
+        {
+            "nodeNameInModel": "Oil_Filter_Mesh",
+            "partId": "oil_filter"
+        },
+        {
+            "nodeNameInModel": "Water_Pump_Mesh",
+            "partId": "water_pump"
+        },
+        {
+            "nodeNameInModel": "Tensioner_Pulley_Mesh",
+            "partId": "belt_tensioner"
+        }
+    ],
+    "defaultAlignment": {
+        "position": [0, 0, 0.5],
+        "rotation": [0, 180, 0],
+        "scale": [1, 1, 1]
+    }
+}
