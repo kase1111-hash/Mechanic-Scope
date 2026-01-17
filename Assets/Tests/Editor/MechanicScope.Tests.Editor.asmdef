@@ -1,0 +1,29 @@
+{
+    "name": "MechanicScope.Tests.Editor",
+    "rootNamespace": "MechanicScope.Tests.Editor",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "MechanicScope.Core",
+        "MechanicScope.Data",
+        "MechanicScope.Voice",
+        "MechanicScope.Performance",
+        "MechanicScope.Accessibility",
+        "MechanicScope.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
