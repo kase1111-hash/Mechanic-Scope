@@ -1,0 +1,77 @@
+{
+    "id": "replace_alternator",
+    "name": "Replace Alternator",
+    "description": "Remove and replace the alternator on GM LS Gen IV engines",
+    "engineId": "gm_ls_gen4",
+    "estimatedTime": "45-60 minutes",
+    "difficulty": "intermediate",
+    "tools": [
+        "10mm socket",
+        "13mm socket",
+        "15mm wrench or belt tool",
+        "Ratchet with extension",
+        "Torque wrench"
+    ],
+    "steps": [
+        {
+            "id": 1,
+            "action": "Disconnect negative battery terminal",
+            "details": "Loosen the 10mm nut securing the negative battery cable. Pull the cable off the terminal and tuck it away from the battery to prevent accidental contact. This is a critical safety step.",
+            "partId": "battery_negative",
+            "tools": ["10mm socket"],
+            "warnings": ["Always disconnect battery first to prevent electrical shorts", "Wait 30 seconds before proceeding to allow capacitors to discharge"],
+            "requires": [],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 2,
+            "action": "Remove serpentine belt from alternator",
+            "details": "Locate the belt tensioner pulley. Using a 15mm wrench or belt tool, rotate the tensioner clockwise to release tension on the belt. While holding tension released, slip the belt off the alternator pulley. Slowly release the tensioner.",
+            "partId": "serpentine_belt",
+            "tools": ["15mm wrench or belt tool"],
+            "warnings": ["Note belt routing before removal - take a photo if needed", "Do not release tensioner suddenly"],
+            "requires": [1],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 3,
+            "action": "Disconnect alternator electrical connector",
+            "details": "Locate the main electrical connector on the back of the alternator. Press the release tab and pull the connector straight off. There is also a smaller wire with a push-on spade connector for the charge indicator - pull this off as well.",
+            "partId": "alternator_connector",
+            "tools": [],
+            "warnings": ["Do not pry on the connector - use the release tab"],
+            "requires": [1],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 4,
+            "action": "Remove alternator mounting bolts",
+            "details": "The alternator is secured by two 13mm bolts - one on the front/top and one on the rear/bottom. Remove both bolts while supporting the alternator to prevent it from falling.",
+            "partId": "alternator_gm_ls",
+            "tools": ["13mm socket", "Ratchet with extension"],
+            "warnings": ["Support the alternator - it's heavier than it looks"],
+            "requires": [2, 3],
+            "torqueSpec": {
+                "value": 37,
+                "unit": "ft-lbs",
+                "note": "Apply on reinstall"
+            },
+            "media": null
+        },
+        {
+            "id": 5,
+            "action": "Remove alternator from engine bay",
+            "details": "With the bolts removed, lift and maneuver the alternator out of the engine bay. You may need to rotate it to clear the radiator hose and other components. Note the position of any brackets or spacers.",
+            "partId": "alternator_gm_ls",
+            "tools": [],
+            "warnings": ["Watch for any wires or hoses that may be in the way"],
+            "requires": [4],
+            "torqueSpec": null,
+            "media": null
+        }
+    ],
+    "reinstallNotes": "Installation is reverse of removal. Ensure the alternator is properly seated before tightening bolts. Torque mounting bolts to 37 ft-lbs. Verify belt is properly seated on all pulleys before releasing tensioner. After reconnecting battery, verify charging system operation with a multimeter (should show 13.5-14.5V at idle)."
+}
