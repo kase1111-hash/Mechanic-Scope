@@ -128,17 +128,49 @@ namespace MechanicScope.Core
         /// </summary>
         public void ImportPartData(string json)
         {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                Debug.LogWarning("PartDatabase: Cannot import empty JSON data");
+                return;
+            }
+
             try
             {
                 PartsDataFile dataFile = JsonUtility.FromJson<PartsDataFile>(json);
-                if (dataFile?.parts == null) return;
+                if (dataFile == null)
+                {
+                    OnLoadError?.Invoke("Failed to import parts data: JSON parsing returned null");
+                    return;
+                }
+
+                if (dataFile.parts == null)
+                {
+                    Debug.LogWarning("PartDatabase: Parts array is null in JSON data");
+                    return;
+                }
+
+                int importedCount = 0;
+                int skippedCount = 0;
 
                 foreach (PartData partData in dataFile.parts)
                 {
+                    if (partData == null)
+                    {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(partData.id))
+                    {
+                        Debug.LogWarning($"PartDatabase: Skipping part with empty ID (name: '{partData.name ?? "unknown"}')");
+                        skippedCount++;
+                        continue;
+                    }
+
                     PartInfo part = new PartInfo
                     {
                         Id = partData.id,
-                        Name = partData.name,
+                        Name = partData.name ?? partData.id,
                         Description = partData.description,
                         Category = partData.category,
                         ImagePath = partData.imagePath,
@@ -151,11 +183,15 @@ namespace MechanicScope.Core
                     {
                         foreach (var spec in partData.specs)
                         {
-                            part.Specs[spec.key] = spec.value;
+                            if (spec != null && !string.IsNullOrEmpty(spec.key))
+                            {
+                                part.Specs[spec.key] = spec.value ?? "";
+                            }
                         }
                     }
 
                     parts[part.Id] = part;
+                    importedCount++;
 
                     // Update category index
                     if (!string.IsNullOrEmpty(part.Category))
@@ -175,6 +211,8 @@ namespace MechanicScope.Core
                     {
                         foreach (string engineId in partData.engines)
                         {
+                            if (string.IsNullOrEmpty(engineId)) continue;
+
                             if (!engineParts.ContainsKey(engineId))
                             {
                                 engineParts[engineId] = new List<string>();
@@ -187,7 +225,7 @@ namespace MechanicScope.Core
                     }
                 }
 
-                Debug.Log($"Imported {dataFile.parts.Length} parts into database");
+                Debug.Log($"Imported {importedCount} parts into database" + (skippedCount > 0 ? $" ({skippedCount} skipped)" : ""));
             }
             catch (Exception e)
             {

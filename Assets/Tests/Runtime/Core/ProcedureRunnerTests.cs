@@ -26,7 +26,7 @@ namespace MechanicScope.Tests.Runtime.Core
         {
             Assert.IsNotNull(procedureRunner);
             Assert.IsNull(procedureRunner.CurrentProcedure);
-            Assert.IsFalse(procedureRunner.IsRunning);
+            Assert.IsFalse(procedureRunner.IsLoaded);
         }
 
         [Test]
@@ -54,11 +54,11 @@ namespace MechanicScope.Tests.Runtime.Core
             var procedure = JsonUtility.FromJson<Procedure>(json);
 
             // Assert - step1 has no dependencies
-            Assert.AreEqual(0, procedure.steps[0].dependencies.Length);
+            Assert.IsTrue(procedure.steps[0].requires == null || procedure.steps[0].requires.Length == 0);
 
             // Assert - step2 depends on step1
-            Assert.AreEqual(1, procedure.steps[1].dependencies.Length);
-            Assert.AreEqual("step1", procedure.steps[1].dependencies[0]);
+            Assert.AreEqual(1, procedure.steps[1].requires.Length);
+            Assert.AreEqual(1, procedure.steps[1].requires[0]);
         }
 
         [Test]
@@ -71,9 +71,9 @@ namespace MechanicScope.Tests.Runtime.Core
             // Assert
             foreach (var step in procedure.steps)
             {
-                Assert.IsFalse(string.IsNullOrEmpty(step.id), "Step ID should not be empty");
-                Assert.IsFalse(string.IsNullOrEmpty(step.title), "Step title should not be empty");
-                Assert.IsFalse(string.IsNullOrEmpty(step.instruction), "Step instruction should not be empty");
+                Assert.IsTrue(step.id > 0, "Step ID should be a positive integer");
+                Assert.IsFalse(string.IsNullOrEmpty(step.action), "Step action should not be empty");
+                Assert.IsFalse(string.IsNullOrEmpty(step.details), "Step details should not be empty");
             }
         }
 
@@ -89,14 +89,14 @@ namespace MechanicScope.Tests.Runtime.Core
         }
 
         [Test]
-        public void Procedure_EstimatedTime_IsPositive()
+        public void Procedure_EstimatedTime_IsNotEmpty()
         {
             // Arrange
             string json = CreateSampleProcedureJson();
             var procedure = JsonUtility.FromJson<Procedure>(json);
 
             // Assert
-            Assert.Greater(procedure.estimatedTime, 0);
+            Assert.IsFalse(string.IsNullOrEmpty(procedure.estimatedTime));
         }
 
         [UnityTest]
@@ -106,22 +106,21 @@ namespace MechanicScope.Tests.Runtime.Core
             yield return null;
 
             // Verify initial state
-            Assert.IsFalse(procedureRunner.IsRunning);
+            Assert.IsFalse(procedureRunner.IsLoaded);
 
             yield return null;
         }
 
         [Test]
-        public void Procedure_PartIds_AreMappedToSteps()
+        public void Procedure_PartId_IsMappedToSteps()
         {
             // Arrange
             string json = CreateSampleProcedureJson();
             var procedure = JsonUtility.FromJson<Procedure>(json);
 
             // Assert
-            Assert.IsNotNull(procedure.steps[0].partIds);
-            Assert.AreEqual(1, procedure.steps[0].partIds.Length);
-            Assert.AreEqual("part1", procedure.steps[0].partIds[0]);
+            Assert.IsNotNull(procedure.steps[0].partId);
+            Assert.AreEqual("part1", procedure.steps[0].partId);
         }
 
         [Test]
@@ -134,17 +133,17 @@ namespace MechanicScope.Tests.Runtime.Core
                 name = "Round Trip Test",
                 description = "Testing serialization",
                 engineId = "test_engine",
-                estimatedTime = 60,
+                estimatedTime = "60 minutes",
                 difficulty = "intermediate",
                 steps = new ProcedureStep[]
                 {
                     new ProcedureStep
                     {
-                        id = "step1",
-                        title = "Step 1",
-                        instruction = "Do something",
-                        partIds = new string[] { "part1" },
-                        dependencies = new string[] { }
+                        id = 1,
+                        action = "Step 1",
+                        details = "Do something",
+                        partId = "part1",
+                        requires = new int[] { }
                     }
                 }
             };
@@ -189,38 +188,5 @@ namespace MechanicScope.Tests.Runtime.Core
             // Assert - Unity's JsonUtility leaves arrays null if not initialized
             Assert.IsNull(procedure.steps);
         }
-    }
-
-    /// <summary>
-    /// Minimal Procedure class for testing when actual class is not available.
-    /// </summary>
-    [System.Serializable]
-    public class Procedure
-    {
-        public string id;
-        public string name;
-        public string description;
-        public string engineId;
-        public int estimatedTime;
-        public string difficulty;
-        public ProcedureStep[] steps;
-    }
-
-    [System.Serializable]
-    public class ProcedureStep
-    {
-        public string id;
-        public string title;
-        public string instruction;
-        public string[] partIds;
-        public string[] dependencies;
-        public StepMedia media;
-    }
-
-    [System.Serializable]
-    public class StepMedia
-    {
-        public string image;
-        public string video;
     }
 }
