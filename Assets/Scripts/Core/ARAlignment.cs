@@ -68,7 +68,13 @@ namespace MechanicScope.Core
         private void Awake()
         {
             if (arCamera == null)
+            {
                 arCamera = Camera.main;
+                if (arCamera == null)
+                {
+                    Debug.LogError("ARAlignment: No AR camera assigned and Camera.main is null. AR features will not work correctly.");
+                }
+            }
         }
 
         private void Start()
@@ -175,9 +181,17 @@ namespace MechanicScope.Core
         /// </summary>
         private void GenerateMeshColliders(GameObject model)
         {
+            if (model == null) return;
+
             MeshFilter[] meshFilters = model.GetComponentsInChildren<MeshFilter>();
             foreach (MeshFilter meshFilter in meshFilters)
             {
+                if (meshFilter == null) continue;
+                if (meshFilter.sharedMesh == null)
+                {
+                    Debug.LogWarning($"MeshFilter on '{meshFilter.gameObject.name}' has no mesh assigned, skipping collider generation.");
+                    continue;
+                }
                 if (meshFilter.GetComponent<Collider>() == null)
                 {
                     MeshCollider collider = meshFilter.gameObject.AddComponent<MeshCollider>();

@@ -93,6 +93,7 @@ namespace MechanicScope.Tests.Runtime
 
         /// <summary>
         /// Creates sample procedure JSON for testing.
+        /// Matches the actual Procedure and ProcedureStep schema in MechanicScope.Core.
         /// </summary>
         protected string CreateSampleProcedureJson()
         {
@@ -101,22 +102,23 @@ namespace MechanicScope.Tests.Runtime
                 ""name"": ""Test Procedure"",
                 ""description"": ""A test procedure for unit testing"",
                 ""engineId"": ""test_engine"",
-                ""estimatedTime"": 30,
+                ""estimatedTime"": ""30 minutes"",
                 ""difficulty"": ""beginner"",
+                ""tools"": [""wrench"", ""socket set""],
                 ""steps"": [
                     {
-                        ""id"": ""step1"",
-                        ""title"": ""First Step"",
-                        ""instruction"": ""Do the first thing"",
-                        ""partIds"": [""part1""],
-                        ""dependencies"": []
+                        ""id"": 1,
+                        ""action"": ""First Step"",
+                        ""details"": ""Do the first thing"",
+                        ""partId"": ""part1"",
+                        ""requires"": []
                     },
                     {
-                        ""id"": ""step2"",
-                        ""title"": ""Second Step"",
-                        ""instruction"": ""Do the second thing"",
-                        ""partIds"": [""part2""],
-                        ""dependencies"": [""step1""]
+                        ""id"": 2,
+                        ""action"": ""Second Step"",
+                        ""details"": ""Do the second thing"",
+                        ""partId"": ""part2"",
+                        ""requires"": [1]
                     }
                 ]
             }";

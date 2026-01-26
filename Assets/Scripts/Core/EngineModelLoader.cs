@@ -29,6 +29,9 @@ namespace MechanicScope.Core
         private string enginesDirectory;
         private Dictionary<string, GameObject> loadedModels = new Dictionary<string, GameObject>();
 
+        // Characters that are not allowed in engine IDs for security
+        private static readonly char[] InvalidPathChars = new char[] { '/', '\\', ':', '*', '?', '"', '<', '>', '|', '.' };
+
         private void Awake()
         {
             enginesDirectory = Path.Combine(Application.persistentDataPath, "engines");
@@ -105,6 +108,12 @@ namespace MechanicScope.Core
         /// </summary>
         public void LoadEngine(string engineId)
         {
+            if (IsLoading)
+            {
+                Debug.LogWarning("EngineModelLoader: Already loading an engine. Please wait for the current load to complete.");
+                return;
+            }
+
             EngineManifest manifest = AvailableEngines.Find(e => e.id == engineId);
             if (manifest == null)
             {
@@ -120,6 +129,12 @@ namespace MechanicScope.Core
         /// </summary>
         public void LoadEngine(EngineManifest manifest)
         {
+            if (IsLoading)
+            {
+                Debug.LogWarning("EngineModelLoader: Already loading an engine. Please wait for the current load to complete.");
+                return;
+            }
+
             if (manifest == null)
             {
                 OnLoadError?.Invoke("Cannot load null engine manifest.");
@@ -396,9 +411,17 @@ namespace MechanicScope.Core
         /// </summary>
         public bool ImportEngine(string sourcePath, string engineId, string engineName)
         {
+            // Validate engineId to prevent path traversal
+            string sanitizedId = SanitizeEngineId(engineId);
+            if (sanitizedId == null)
+            {
+                OnLoadError?.Invoke($"Invalid engine ID: '{engineId}'");
+                return false;
+            }
+
             try
             {
-                string destDir = Path.Combine(enginesDirectory, engineId);
+                string destDir = Path.Combine(enginesDirectory, sanitizedId);
                 EnsureDirectoryExists(destDir);
 
                 string fileName = Path.GetFileName(sourcePath);
@@ -434,6 +457,13 @@ namespace MechanicScope.Core
         /// </summary>
         public bool DeleteEngine(string engineId)
         {
+            // Validate engineId to prevent path traversal
+            if (!IsValidEngineId(engineId))
+            {
+                Debug.LogWarning($"DeleteEngine: Invalid engine ID: '{engineId}'");
+                return false;
+            }
+
             EngineManifest manifest = AvailableEngines.Find(e => e.id == engineId);
             if (manifest == null || manifest.IsBundled)
             {
@@ -469,6 +499,42 @@ namespace MechanicScope.Core
             {
                 Directory.CreateDirectory(path);
             }
+        }
+
+        /// <summary>
+        /// Sanitizes an engine ID to prevent path traversal attacks.
+        /// Returns null if the ID is invalid.
+        /// </summary>
+        public static string SanitizeEngineId(string engineId)
+        {
+            if (string.IsNullOrWhiteSpace(engineId))
+            {
+                return null;
+            }
+
+            // Check for path traversal patterns
+            if (engineId.Contains("..") || engineId.StartsWith("/") || engineId.StartsWith("\\"))
+            {
+                Debug.LogWarning($"EngineModelLoader: Invalid engine ID detected (path traversal attempt): '{engineId}'");
+                return null;
+            }
+
+            // Check for invalid characters
+            if (engineId.IndexOfAny(InvalidPathChars) >= 0)
+            {
+                Debug.LogWarning($"EngineModelLoader: Invalid engine ID detected (contains invalid characters): '{engineId}'");
+                return null;
+            }
+
+            return engineId.Trim();
+        }
+
+        /// <summary>
+        /// Validates that an engine ID is safe to use.
+        /// </summary>
+        public static bool IsValidEngineId(string engineId)
+        {
+            return SanitizeEngineId(engineId) != null;
         }
     }
 

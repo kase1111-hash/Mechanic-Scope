@@ -83,12 +83,32 @@ namespace MechanicScope.Core
                 try
                 {
                     string json = File.ReadAllText(file);
-                    Procedure procedure = JsonUtility.FromJson<Procedure>(json);
-                    if (procedure != null && !string.IsNullOrEmpty(procedure.id))
+                    if (string.IsNullOrWhiteSpace(json))
                     {
-                        procedure.FilePath = file;
-                        procedures.Add(procedure);
+                        Debug.LogWarning($"Procedure file is empty: {file}");
+                        continue;
                     }
+
+                    Procedure procedure = JsonUtility.FromJson<Procedure>(json);
+                    if (procedure == null)
+                    {
+                        Debug.LogWarning($"Failed to deserialize procedure from {file}: JSON parsing returned null");
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(procedure.id))
+                    {
+                        Debug.LogWarning($"Procedure in {file} has no valid ID, skipping");
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(procedure.name))
+                    {
+                        Debug.LogWarning($"Procedure '{procedure.id}' in {file} has no name");
+                    }
+
+                    procedure.FilePath = file;
+                    procedures.Add(procedure);
                 }
                 catch (Exception e)
                 {
@@ -153,13 +173,28 @@ namespace MechanicScope.Core
         /// </summary>
         public void LoadProcedureFromJson(string json, string engineId)
         {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                OnLoadError?.Invoke("Cannot load procedure: JSON string is null or empty");
+                return;
+            }
+
             try
             {
                 Procedure procedure = JsonUtility.FromJson<Procedure>(json);
-                if (procedure != null)
+                if (procedure == null)
                 {
-                    LoadProcedure(procedure, engineId);
+                    OnLoadError?.Invoke("Failed to parse procedure JSON: deserialization returned null");
+                    return;
                 }
+
+                if (string.IsNullOrEmpty(procedure.id))
+                {
+                    OnLoadError?.Invoke("Failed to parse procedure JSON: procedure has no valid ID");
+                    return;
+                }
+
+                LoadProcedure(procedure, engineId);
             }
             catch (Exception e)
             {
