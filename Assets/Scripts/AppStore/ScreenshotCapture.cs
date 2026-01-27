@@ -114,13 +114,16 @@ namespace MechanicScope.AppStore
                 yield return new WaitForSeconds(captureDelay);
             }
 
+            // Create render texture at target resolution
+            int captureWidth = width * superSampleScale;
+            int captureHeight = height * superSampleScale;
+
+            RenderTexture rt = null;
+            Texture2D screenshot = null;
+
             try
             {
-                // Create render texture at target resolution
-                int captureWidth = width * superSampleScale;
-                int captureHeight = height * superSampleScale;
-
-                RenderTexture rt = new RenderTexture(captureWidth, captureHeight, 24, RenderTextureFormat.ARGB32);
+                rt = new RenderTexture(captureWidth, captureHeight, 24, RenderTextureFormat.ARGB32);
                 rt.antiAliasing = 4;
 
                 Camera camera = Camera.main;
@@ -129,17 +132,21 @@ namespace MechanicScope.AppStore
                     camera = FindFirstObjectByType<Camera>();
                 }
 
-                if (camera != null)
+                if (camera == null)
                 {
-                    RenderTexture previousRT = camera.targetTexture;
-                    camera.targetTexture = rt;
-                    camera.Render();
-                    camera.targetTexture = previousRT;
+                    Debug.LogError("Screenshot failed: No camera found");
+                    OnCaptureFailed?.Invoke("No camera found");
+                    yield break;
                 }
+
+                RenderTexture previousRT = camera.targetTexture;
+                camera.targetTexture = rt;
+                camera.Render();
+                camera.targetTexture = previousRT;
 
                 // Read pixels
                 RenderTexture.active = rt;
-                Texture2D screenshot = new Texture2D(captureWidth, captureHeight, TextureFormat.RGB24, false);
+                screenshot = new Texture2D(captureWidth, captureHeight, TextureFormat.RGB24, false);
                 screenshot.ReadPixels(new Rect(0, 0, captureWidth, captureHeight), 0, 0);
                 screenshot.Apply();
 
@@ -170,11 +177,6 @@ namespace MechanicScope.AppStore
 
                 File.WriteAllBytes(filePath, bytes);
 
-                // Cleanup
-                RenderTexture.active = null;
-                Destroy(rt);
-                Destroy(screenshot);
-
                 Debug.Log($"Screenshot saved: {filePath}");
                 OnScreenshotCaptured?.Invoke(filePath);
             }
@@ -182,6 +184,19 @@ namespace MechanicScope.AppStore
             {
                 Debug.LogError($"Screenshot failed: {e.Message}");
                 OnCaptureFailed?.Invoke(e.Message);
+            }
+            finally
+            {
+                // Cleanup - always release resources
+                RenderTexture.active = null;
+                if (rt != null)
+                {
+                    Destroy(rt);
+                }
+                if (screenshot != null)
+                {
+                    Destroy(screenshot);
+                }
             }
 
             // Restore hidden objects

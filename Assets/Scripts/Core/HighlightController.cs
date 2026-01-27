@@ -93,7 +93,17 @@ namespace MechanicScope.Core
         /// </summary>
         public void UnregisterModel()
         {
-            ClearAllHighlights();
+            // Stop all active transition coroutines first to prevent leaks
+            foreach (var state in highlightedParts.Values)
+            {
+                if (state.TransitionCoroutine != null)
+                {
+                    StopCoroutine(state.TransitionCoroutine);
+                    state.TransitionCoroutine = null;
+                }
+            }
+            highlightedParts.Clear();
+
             CleanupMaterials();
             currentModel = null;
         }

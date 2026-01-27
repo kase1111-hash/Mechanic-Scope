@@ -66,6 +66,8 @@ namespace MechanicScope.UI
 
         private void OnDestroy()
         {
+            // Cancel any pending invokes to prevent memory leaks and null references
+            CancelInvoke(nameof(OnSplashComplete));
             UnsubscribeFromEvents();
         }
 

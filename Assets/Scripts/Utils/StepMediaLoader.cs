@@ -139,7 +139,9 @@ namespace MechanicScope.Utils
                         // Resize if needed
                         if (result.width > maxTextureSize || result.height > maxTextureSize)
                         {
+                            Texture2D original = result;
                             result = ResizeTexture(result, maxTextureSize);
+                            Destroy(original); // Destroy the original after resize
                         }
                     }
                     else
@@ -163,7 +165,9 @@ namespace MechanicScope.Utils
                         // Resize if needed
                         if (result.width > maxTextureSize || result.height > maxTextureSize)
                         {
+                            Texture2D original = result;
                             result = ResizeTexture(result, maxTextureSize);
+                            Destroy(original); // Destroy the original after resize
                         }
                     }
                     else
@@ -311,7 +315,8 @@ namespace MechanicScope.Utils
             RenderTexture.active = null;
             RenderTexture.ReleaseTemporary(rt);
 
-            Destroy(source);
+            // Note: Source texture is NOT destroyed here - caller is responsible for cleanup
+            // This prevents use-after-free if caller still holds a reference
 
             return result;
         }

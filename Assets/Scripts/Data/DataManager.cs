@@ -159,34 +159,68 @@ namespace MechanicScope.Data
         /// <summary>
         /// Exports all data to a backup file.
         /// </summary>
+        /// <returns>Backup path on success, null on failure</returns>
         public string ExportBackup()
         {
-            string backupDir = Path.Combine(Application.persistentDataPath, "backups");
-            if (!Directory.Exists(backupDir))
+            try
             {
-                Directory.CreateDirectory(backupDir);
+                string backupDir = Path.Combine(Application.persistentDataPath, "backups");
+                if (!Directory.Exists(backupDir))
+                {
+                    Directory.CreateDirectory(backupDir);
+                }
+
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string backupPath = Path.Combine(backupDir, $"backup_{timestamp}");
+                Directory.CreateDirectory(backupPath);
+
+                // Copy database files
+                string partsDbPath = Path.Combine(DatabaseDirectory, "parts.db");
+                string progressDbPath = Path.Combine(DatabaseDirectory, "progress.db");
+                bool anyFilesCopied = false;
+
+                if (File.Exists(partsDbPath))
+                {
+                    string destPath = Path.Combine(backupPath, "parts.db");
+                    File.Copy(partsDbPath, destPath);
+                    // Verify the copy succeeded
+                    if (!File.Exists(destPath))
+                    {
+                        throw new IOException($"Failed to copy parts.db to backup");
+                    }
+                    anyFilesCopied = true;
+                }
+
+                if (File.Exists(progressDbPath))
+                {
+                    string destPath = Path.Combine(backupPath, "progress.db");
+                    File.Copy(progressDbPath, destPath);
+                    // Verify the copy succeeded
+                    if (!File.Exists(destPath))
+                    {
+                        throw new IOException($"Failed to copy progress.db to backup");
+                    }
+                    anyFilesCopied = true;
+                }
+
+                if (!anyFilesCopied)
+                {
+                    // No files to backup - clean up empty directory
+                    Directory.Delete(backupPath);
+                    Debug.LogWarning("No database files found to backup");
+                    OnError?.Invoke("No database files found to backup");
+                    return null;
+                }
+
+                Debug.Log($"Backup created at: {backupPath}");
+                return backupPath;
             }
-
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string backupPath = Path.Combine(backupDir, $"backup_{timestamp}");
-            Directory.CreateDirectory(backupPath);
-
-            // Copy database files
-            string partsDbPath = Path.Combine(DatabaseDirectory, "parts.db");
-            string progressDbPath = Path.Combine(DatabaseDirectory, "progress.db");
-
-            if (File.Exists(partsDbPath))
+            catch (Exception e)
             {
-                File.Copy(partsDbPath, Path.Combine(backupPath, "parts.db"));
+                Debug.LogError($"Backup failed: {e.Message}");
+                OnError?.Invoke($"Backup failed: {e.Message}");
+                return null;
             }
-
-            if (File.Exists(progressDbPath))
-            {
-                File.Copy(progressDbPath, Path.Combine(backupPath, "progress.db"));
-            }
-
-            Debug.Log($"Backup created at: {backupPath}");
-            return backupPath;
         }
 
         /// <summary>
