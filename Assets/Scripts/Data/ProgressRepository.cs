@@ -142,10 +142,15 @@ namespace MechanicScope.Data
             string stepsString = row["completed_steps"]?.ToString();
             if (string.IsNullOrEmpty(stepsString)) return new List<int>();
 
-            return stepsString.Split(',')
-                .Where(s => !string.IsNullOrEmpty(s))
-                .Select(s => int.Parse(s.Trim()))
-                .ToList();
+            var result = new List<int>();
+            foreach (var s in stepsString.Split(','))
+            {
+                if (!string.IsNullOrEmpty(s) && int.TryParse(s.Trim(), out int stepId))
+                {
+                    result.Add(stepId);
+                }
+            }
+            return result;
         }
 
         /// <summary>

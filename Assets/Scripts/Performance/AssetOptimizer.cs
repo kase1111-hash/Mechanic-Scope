@@ -331,11 +331,21 @@ namespace MechanicScope.Performance
         /// </summary>
         public void ClearAllPools()
         {
-            foreach (var poolId in objectPools.Keys)
+            // Create a copy of keys to avoid concurrent modification during iteration
+            var poolIds = new List<string>(objectPools.Keys);
+            foreach (var poolId in poolIds)
             {
-                ClearPool(poolId);
+                if (objectPools.TryGetValue(poolId, out var pool))
+                {
+                    while (pool.Count > 0)
+                    {
+                        var obj = pool.Dequeue();
+                        if (obj != null) Destroy(obj);
+                    }
+                }
             }
             objectPools.Clear();
+            poolPrefabs.Clear();
         }
 
         #endregion

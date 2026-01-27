@@ -52,6 +52,11 @@ namespace MechanicScope.Performance
         private long lastGCMemory;
         private int gcCount;
 
+        // Cached GUI styles (avoid allocation every frame)
+        private static GUIStyle cachedLabelStyle;
+        private static GUIStyle cachedBgStyle;
+        private static Texture2D cachedBgTexture;
+
         private void Awake()
         {
             if (Instance == null)
@@ -214,12 +219,23 @@ namespace MechanicScope.Performance
 
         private void DrawDebugOverlay()
         {
-            GUIStyle style = new GUIStyle();
-            style.fontSize = 14;
-            style.normal.textColor = Color.white;
+            // Initialize cached styles once (lazy initialization)
+            if (cachedLabelStyle == null)
+            {
+                cachedLabelStyle = new GUIStyle();
+                cachedLabelStyle.fontSize = 14;
+                cachedLabelStyle.normal.textColor = Color.white;
+            }
 
-            GUIStyle bgStyle = new GUIStyle();
-            bgStyle.normal.background = MakeTexture(1, 1, new Color(0, 0, 0, 0.7f));
+            if (cachedBgStyle == null || cachedBgTexture == null)
+            {
+                cachedBgTexture = MakeTexture(1, 1, new Color(0, 0, 0, 0.7f));
+                cachedBgStyle = new GUIStyle();
+                cachedBgStyle.normal.background = cachedBgTexture;
+            }
+
+            GUIStyle style = cachedLabelStyle;
+            GUIStyle bgStyle = cachedBgStyle;
 
             float width = 220;
             float height = 180;
