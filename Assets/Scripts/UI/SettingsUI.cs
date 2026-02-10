@@ -69,6 +69,12 @@ namespace MechanicScope.UI
 
         private void Start()
         {
+            // Fall back to singleton if not wired via Inspector
+            if (dataManager == null)
+            {
+                dataManager = DataManager.Instance;
+            }
+
             SetupUI();
             LoadSettings();
             UpdateDataStats();
