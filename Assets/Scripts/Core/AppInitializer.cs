@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 using MechanicScope.Data;
-using MechanicScope.Performance;
 using MechanicScope.Accessibility;
 using MechanicScope.Voice;
 
@@ -23,13 +22,10 @@ namespace MechanicScope.Core
 
         [Header("Dependencies")]
         [SerializeField] private DataManager dataManagerPrefab;
-        [SerializeField] private LODManager lodManagerPrefab;
-        [SerializeField] private PerformanceMonitor performanceMonitorPrefab;
         [SerializeField] private AccessibilityManager accessibilityManagerPrefab;
 
         [Header("Optional Systems")]
         [SerializeField] private bool enableVoiceCommands = true;
-        [SerializeField] private bool enablePerformanceMonitoring = true;
 
         // Events
         public event Action OnInitializationStarted;
@@ -48,7 +44,6 @@ namespace MechanicScope.Core
             CheckingRequirements,
             InitializingData,
             InitializingAR,
-            InitializingPerformance,
             InitializingAccessibility,
             InitializingVoice,
             LoadingContent,
@@ -113,33 +108,24 @@ namespace MechanicScope.Core
                 yield return InitializeARSystems();
                 progress = 0.5f;
 
-                // Step 4: Initialize performance systems
-                if (enablePerformanceMonitoring)
-                {
-                    CurrentState = InitializationState.InitializingPerformance;
-                    OnInitializationProgress?.Invoke(0.55f);
-                    yield return InitializePerformanceSystems();
-                }
-                progress = 0.65f;
-
-                // Step 5: Initialize accessibility
+                // Step 4: Initialize accessibility
                 CurrentState = InitializationState.InitializingAccessibility;
-                OnInitializationProgress?.Invoke(0.7f);
+                OnInitializationProgress?.Invoke(0.6f);
                 yield return InitializeAccessibility();
-                progress = 0.8f;
+                progress = 0.7f;
 
-                // Step 6: Initialize voice commands
+                // Step 5: Initialize voice commands
                 if (enableVoiceCommands)
                 {
                     CurrentState = InitializationState.InitializingVoice;
-                    OnInitializationProgress?.Invoke(0.85f);
+                    OnInitializationProgress?.Invoke(0.8f);
                     yield return InitializeVoiceCommands();
                 }
-                progress = 0.9f;
+                progress = 0.85f;
 
-                // Step 7: Load initial content
+                // Step 6: Load initial content
                 CurrentState = InitializationState.LoadingContent;
-                OnInitializationProgress?.Invoke(0.95f);
+                OnInitializationProgress?.Invoke(0.9f);
                 yield return LoadInitialContent();
 
                 // Ensure minimum splash time
@@ -225,46 +211,28 @@ namespace MechanicScope.Core
         {
             Debug.Log("[AppInitializer] Initializing AR systems...");
 
-            // AR systems are typically set up in scene
-            // Just ensure camera is available
             if (Camera.main == null)
             {
                 Debug.LogWarning("Main camera not found. AR may not function properly.");
             }
 
-            yield return null;
-        }
-
-        private IEnumerator InitializePerformanceSystems()
-        {
-            Debug.Log("[AppInitializer] Initializing performance systems...");
-
-            // Create LODManager if not exists
-            if (LODManager.Instance == null)
+            // Wait for AR session to be ready (up to 5 seconds)
+            var arSession = FindFirstObjectByType<UnityEngine.XR.ARFoundation.ARSession>();
+            if (arSession != null)
             {
-                if (lodManagerPrefab != null)
+                float timeout = 5f;
+                float elapsed = 0f;
+                while (UnityEngine.XR.ARFoundation.ARSession.state < UnityEngine.XR.ARFoundation.ARSessionState.CheckingAvailability
+                       && elapsed < timeout)
                 {
-                    Instantiate(lodManagerPrefab);
+                    elapsed += Time.deltaTime;
+                    yield return null;
                 }
-                else
-                {
-                    GameObject go = new GameObject("LODManager");
-                    go.AddComponent<LODManager>();
-                }
+                Debug.Log($"[AppInitializer] AR session state: {UnityEngine.XR.ARFoundation.ARSession.state}");
             }
-
-            // Create PerformanceMonitor if not exists
-            if (PerformanceMonitor.Instance == null)
+            else
             {
-                if (performanceMonitorPrefab != null)
-                {
-                    Instantiate(performanceMonitorPrefab);
-                }
-                else
-                {
-                    GameObject go = new GameObject("PerformanceMonitor");
-                    go.AddComponent<PerformanceMonitor>();
-                }
+                Debug.LogWarning("[AppInitializer] No ARSession found in scene.");
             }
 
             yield return null;
@@ -311,8 +279,13 @@ namespace MechanicScope.Core
         {
             Debug.Log("[AppInitializer] Loading initial content...");
 
-            // Pre-load any required assets
-            // Load engine list, etc.
+            // Trigger engine list scan so the selection UI is populated
+            var modelLoader = FindFirstObjectByType<EngineModelLoader>();
+            if (modelLoader != null)
+            {
+                modelLoader.RefreshEngineList();
+                Debug.Log($"[AppInitializer] Found {modelLoader.AvailableEngines.Count} engines.");
+            }
 
             yield return null;
         }
@@ -328,7 +301,6 @@ namespace MechanicScope.Core
                 InitializationState.CheckingRequirements => "Checking device requirements...",
                 InitializationState.InitializingData => "Loading data...",
                 InitializationState.InitializingAR => "Setting up AR...",
-                InitializationState.InitializingPerformance => "Optimizing performance...",
                 InitializationState.InitializingAccessibility => "Configuring accessibility...",
                 InitializationState.InitializingVoice => "Setting up voice commands...",
                 InitializationState.LoadingContent => "Loading content...",

@@ -272,17 +272,6 @@ namespace MechanicScope.Performance
                 y += 20;
             }
 
-            // LOD info
-            if (LODManager.Instance != null)
-            {
-                var stats = LODManager.Instance.GetStats();
-                style.normal.textColor = Color.white;
-                GUI.Label(new Rect(x, y, width, 20), $"LOD Bias: {stats.lodBias:F2}", style);
-                y += 20;
-                GUI.Label(new Rect(x, y, width, 20), $"Managed Objects: {stats.managedObjects}", style);
-                y += 20;
-            }
-
             // Device info
             style.normal.textColor = Color.gray;
             GUI.Label(new Rect(x, y, width, 20), $"{SystemInfo.deviceModel}", style);
