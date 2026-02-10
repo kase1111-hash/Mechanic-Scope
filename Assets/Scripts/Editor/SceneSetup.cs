@@ -95,7 +95,12 @@ namespace MechanicScope.Editor
             // HighlightController
             var highlightGO = new GameObject("HighlightController");
             highlightGO.transform.SetParent(managersGO.transform);
-            highlightGO.AddComponent<Core.HighlightController>();
+            var highlightController = highlightGO.AddComponent<Core.HighlightController>();
+
+            // AccessibilityManager (persists across scenes)
+            var accessibilityGO = new GameObject("AccessibilityManager");
+            accessibilityGO.transform.SetParent(managersGO.transform);
+            accessibilityGO.AddComponent<Accessibility.AccessibilityManager>();
 
             // === UI Canvas ===
             var canvasGO = new GameObject("UI Canvas");
@@ -189,6 +194,11 @@ namespace MechanicScope.Editor
             so.FindProperty("settingsButton").objectReferenceValue = settingsBtnGO.GetComponent<Button>();
             so.FindProperty("headerTitle").objectReferenceValue = titleGO.GetComponent<TextMeshProUGUI>();
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Wire core system cross-references
+            WireSerializedField(procedureRunner, "modelLoader", modelLoader);
+            WireSerializedField(procedureRunner, "progressTracker", progressTracker);
+            WireSerializedField(modelLoader, "highlightController", highlightController);
 
             // Wire sub-UI component references
             WireSerializedField(engineSelectionUI, "modelLoader", modelLoader);
