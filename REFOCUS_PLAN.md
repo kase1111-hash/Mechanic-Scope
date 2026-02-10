@@ -299,9 +299,9 @@ The `VoiceCommandManager` and command registration are real. The gap is native s
 - No crashes during the full flow
 
 ### M2: It's Testable (Phase 2)
-- Real integration tests pass for ProcedureRunner, PartRepository, ProgressRepository
-- Single data layer (SQLite only)
-- AppInitializer performs real initialization
+- 70+ real integration tests covering ProcedureRunner, PartDatabase, EngineModelLoader
+- Both data layers retained (Phase 1 JSON for vertical slice, Phase 2 SQLite for future)
+- AppInitializer performs real AR session initialization (done in Phase 0)
 
 ### M3: It's Useful (Phase 3)
 - Part highlighting shows which part the current step references
@@ -335,11 +335,13 @@ The `VoiceCommandManager` and command registration are real. The gap is native s
 | Decision | Rationale |
 |---|---|
 | **GLB over FBX/OBJ** | GLTFUtility is free, well-maintained, and GLB is the standard for runtime 3D on mobile. FBX requires TriLib ($). OBJ lacks animations and PBR materials. |
-| **SQLite over JSON files** | Already implemented with migrations, FTS5 search, and transactions. JSON files don't scale and lack query capability. |
+| **glTFast over GLTFUtility** | glTFast (`com.unity.cloud.gltfast` 6.6.0) is Unity's official glTF package — better maintained, async loading, UPM-installable. Used for Phase 0 EngineModelLoader rewrite. |
+| **Keep both data layers (revised)** | Original plan: delete Phase 1 JSON layer, keep SQLite. Revised: keep both. Phase 1 (`PartDatabase` + `ProgressTracker`) is simpler, has no native dependency, and is what the vertical slice UI already uses. Phase 2 (`DataManager` + SQLite repositories) stays for future migration when query complexity justifies it. Added `DataManager.Instance` fallbacks to UI components that reference it. |
 | **Cut LODManager** | Mesh simplification at runtime is a solved problem (pre-author LOD meshes in Blender). The stub implementation provides zero value. |
 | **Defer voice** | High effort (native plugins), medium value. The app's primary interaction is touch, and voice is additive. |
 | **Delete all tests** | Tests that mock everything validate nothing. Starting fresh with real integration tests is faster than fixing mock tests. |
 | **One engine first** | Prove the flow works with one engine (GM LS Gen IV) before adding more. The engine import system (`EngineImporter.cs`) already supports adding more later. |
+| **Edit-mode tests over play-mode** | All current test targets (JSON parsing, dependency graphs, search, state machines) are pure logic — no frame ticks or coroutines needed. Edit-mode tests run faster and don't require a scene. Play-mode tests can be added later for AR/UI integration. |
 
 ---
 
