@@ -17,6 +17,7 @@ namespace MechanicScope.Core
         [Header("Settings")]
         [SerializeField] private Material defaultMaterial;
         [SerializeField] private Material highlightMaterial;
+        [SerializeField] private HighlightController highlightController;
 
         // Events
         public event Action<EngineManifest> OnEngineListUpdated;
@@ -261,6 +262,13 @@ namespace MechanicScope.Core
 
             loadedModels[manifest.id] = modelRoot;
             ApplyPartMappings(modelRoot, manifest);
+
+            // Register with HighlightController for shader-based highlighting
+            if (highlightController != null)
+            {
+                highlightController.RegisterModel(modelRoot);
+            }
+
             OnModelLoaded?.Invoke(modelRoot, manifest);
 
             Debug.Log($"[EngineModelLoader] Model loaded: {manifest.name} ({modelRoot.GetComponentsInChildren<MeshRenderer>().Length} meshes)");
@@ -335,29 +343,51 @@ namespace MechanicScope.Core
         }
 
         /// <summary>
-        /// Highlights specific parts on the current model.
+        /// Highlights specific parts on the current model as primary (pulsing).
         /// </summary>
         public void HighlightParts(List<string> partIds)
         {
-            if (CurrentEngine == null || !loadedModels.ContainsKey(CurrentEngine.id)) return;
+            if (highlightController != null)
+            {
+                highlightController.ClearAllHighlights();
+                highlightController.HighlightParts(partIds, HighlightController.HighlightType.Primary);
+                return;
+            }
 
+            // Fallback: direct material swap if no HighlightController
+            if (CurrentEngine == null || !loadedModels.ContainsKey(CurrentEngine.id)) return;
             GameObject model = loadedModels[CurrentEngine.id];
             PartIdentifier[] parts = model.GetComponentsInChildren<PartIdentifier>();
-
             foreach (var part in parts)
             {
                 Renderer renderer = part.GetComponent<Renderer>();
                 if (renderer == null) continue;
-
                 if (partIds.Contains(part.PartId))
-                {
                     renderer.material = highlightMaterial != null ? highlightMaterial : renderer.material;
-                    // Add pulsing effect via shader or animation
-                }
                 else
-                {
                     renderer.material = defaultMaterial != null ? defaultMaterial : renderer.material;
-                }
+            }
+        }
+
+        /// <summary>
+        /// Highlights parts as secondary (available steps, no pulsing).
+        /// </summary>
+        public void HighlightPartsSecondary(List<string> partIds)
+        {
+            if (highlightController != null)
+            {
+                highlightController.HighlightParts(partIds, HighlightController.HighlightType.Secondary);
+            }
+        }
+
+        /// <summary>
+        /// Marks a part as completed (brief green flash).
+        /// </summary>
+        public void MarkPartCompleted(string partId)
+        {
+            if (highlightController != null)
+            {
+                highlightController.MarkPartCompleted(partId);
             }
         }
 
@@ -366,6 +396,11 @@ namespace MechanicScope.Core
         /// </summary>
         public void ClearHighlights()
         {
+            if (highlightController != null)
+            {
+                highlightController.ClearAllHighlights();
+                return;
+            }
             HighlightParts(new List<string>());
         }
 
@@ -376,6 +411,11 @@ namespace MechanicScope.Core
         {
             if (CurrentEngine != null && loadedModels.ContainsKey(CurrentEngine.id))
             {
+                if (highlightController != null)
+                {
+                    highlightController.UnregisterModel();
+                }
+
                 Destroy(loadedModels[CurrentEngine.id]);
                 loadedModels.Remove(CurrentEngine.id);
                 CurrentEngine = null;

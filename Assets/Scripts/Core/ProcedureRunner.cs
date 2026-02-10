@@ -267,6 +267,12 @@ namespace MechanicScope.Core
                 progressTracker.SaveProgress(CurrentProcedure.id, CurrentProcedure.engineId, completedStepIds.ToList());
             }
 
+            // Flash completed part green
+            if (modelLoader != null && !string.IsNullOrEmpty(step.partId))
+            {
+                modelLoader.MarkPartCompleted(step.partId);
+            }
+
             OnStepCompleted?.Invoke(step);
 
             // Check if procedure is complete
@@ -452,6 +458,18 @@ namespace MechanicScope.Core
             if (modelLoader != null)
             {
                 modelLoader.HighlightParts(highlightParts);
+
+                // Secondary highlights for other available step parts
+                List<string> secondaryParts = GetAllAvailableStepParts();
+                // Exclude primary parts from secondary
+                foreach (string primary in highlightParts)
+                {
+                    secondaryParts.Remove(primary);
+                }
+                if (secondaryParts.Count > 0)
+                {
+                    modelLoader.HighlightPartsSecondary(secondaryParts);
+                }
             }
         }
 

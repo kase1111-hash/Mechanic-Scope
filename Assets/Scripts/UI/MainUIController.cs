@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using MechanicScope.Core;
+using MechanicScope.Accessibility;
 
 namespace MechanicScope.UI
 {
@@ -224,6 +225,31 @@ namespace MechanicScope.UI
             }
 
             OnModeChanged?.Invoke(mode);
+
+            // Announce mode change for screen readers
+            AnnounceMode(mode);
+        }
+
+        private void AnnounceMode(AppMode mode)
+        {
+            if (AccessibilityManager.Instance == null) return;
+
+            string announcement = mode switch
+            {
+                AppMode.ModelSelection => "Select Engine screen. Choose an engine to begin.",
+                AppMode.Alignment => "Align Model screen. Position the 3D model over your engine.",
+                AppMode.ProcedureSelection => "Select Procedure screen. Choose a repair procedure.",
+                AppMode.ProcedureActive => $"Procedure active: {procedureRunner?.CurrentProcedure?.name ?? "Procedure"}",
+                AppMode.PartInspection => "Part Details screen.",
+                AppMode.Settings => "Settings screen.",
+                AppMode.Completion => "Repair complete!",
+                _ => null
+            };
+
+            if (announcement != null)
+            {
+                AccessibilityManager.Instance.AnnounceForScreenReader(announcement, true);
+            }
         }
 
         private void HideAllScreens()
@@ -328,6 +354,9 @@ namespace MechanicScope.UI
                 };
                 progressTracker.LogCompletedRepair(log);
             }
+
+            // Haptic success feedback
+            AccessibilityManager.Instance?.TriggerHaptic(HapticType.Success);
 
             SetMode(AppMode.Completion);
         }
