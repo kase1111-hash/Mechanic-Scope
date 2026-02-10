@@ -2,13 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
+using GLTFast;
 
 namespace MechanicScope.Core
 {
     /// <summary>
     /// Handles loading engine models and their associated metadata.
-    /// Supports .glb, .fbx, and .obj formats through Unity's runtime import capabilities.
+    /// Uses glTFast for runtime GLB/glTF import.
     /// </summary>
     public class EngineModelLoader : MonoBehaviour
     {
@@ -179,13 +181,9 @@ namespace MechanicScope.Core
                     yield return LoadGLBModel(modelPath, manifest);
                     break;
 
-                case ".obj":
-                    yield return LoadOBJModel(modelPath, manifest);
-                    break;
-
                 case ".fbx":
-                    // FBX requires external plugin like TriLib
-                    OnLoadError?.Invoke("FBX runtime loading requires TriLib plugin. Please convert to GLB format.");
+                case ".obj":
+                    OnLoadError?.Invoke($"Format '{extension}' is not supported for runtime loading. Please convert to GLB format using Blender or another tool.");
                     break;
 
                 default:
@@ -198,128 +196,106 @@ namespace MechanicScope.Core
 
         private IEnumerator LoadGLBModel(string path, EngineManifest manifest)
         {
-            // Note: Actual GLB loading requires GLTFUtility or similar plugin
-            // This is a placeholder that creates a simple cube as demonstration
-            Debug.Log($"Loading GLB model from: {path}");
+            Debug.Log($"[EngineModelLoader] Loading GLB/glTF model from: {path}");
 
-            // In production, use GLTFUtility:
-            // GameObject model = Siccity.GLTFUtility.Importer.LoadFromFile(path);
+            var gltf = new GltfImport();
+            bool loadComplete = false;
+            bool loadSuccess = false;
 
-            // Placeholder: Create a simple object structure for testing
-            GameObject model = CreatePlaceholderModel(manifest);
-
-            if (model != null)
+            // Run async glTFast load and wait for it in the coroutine
+            var loadTask = gltf.Load($"file://{path}");
+            loadTask.ContinueWith(task =>
             {
-                model.name = manifest.name;
-                loadedModels[manifest.id] = model;
-                ApplyPartMappings(model, manifest);
-                OnModelLoaded?.Invoke(model, manifest);
-            }
-            else
+                loadSuccess = task.Result;
+                loadComplete = true;
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+
+            while (!loadComplete)
             {
-                OnLoadError?.Invoke("Failed to load GLB model.");
+                yield return null;
             }
 
-            yield return null;
+            if (!loadSuccess)
+            {
+                OnLoadError?.Invoke($"glTFast failed to load model: {path}");
+                gltf.Dispose();
+                yield break;
+            }
+
+            // Instantiate the loaded model into the scene
+            GameObject modelRoot = new GameObject(manifest.name);
+            bool instantiateSuccess = false;
+            bool instantiateComplete = false;
+
+            var instantiateTask = gltf.InstantiateMainSceneAsync(modelRoot.transform);
+            instantiateTask.ContinueWith(task =>
+            {
+                instantiateSuccess = task.Result;
+                instantiateComplete = true;
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+
+            while (!instantiateComplete)
+            {
+                yield return null;
+            }
+
+            if (!instantiateSuccess)
+            {
+                OnLoadError?.Invoke("glTFast failed to instantiate model scene.");
+                Destroy(modelRoot);
+                gltf.Dispose();
+                yield break;
+            }
+
+            // Generate MeshColliders on all rendered parts for raycasting
+            foreach (var meshFilter in modelRoot.GetComponentsInChildren<MeshFilter>())
+            {
+                if (meshFilter.sharedMesh != null && meshFilter.GetComponent<Collider>() == null)
+                {
+                    meshFilter.gameObject.AddComponent<MeshCollider>();
+                }
+            }
+
+            // Apply default alignment from manifest
+            ApplyDefaultAlignment(modelRoot, manifest);
+
+            loadedModels[manifest.id] = modelRoot;
+            ApplyPartMappings(modelRoot, manifest);
+            OnModelLoaded?.Invoke(modelRoot, manifest);
+
+            Debug.Log($"[EngineModelLoader] Model loaded: {manifest.name} ({modelRoot.GetComponentsInChildren<MeshRenderer>().Length} meshes)");
         }
 
-        private IEnumerator LoadOBJModel(string path, EngineManifest manifest)
+        private void ApplyDefaultAlignment(GameObject root, EngineManifest manifest)
         {
-            // Note: OBJ loading requires a runtime OBJ loader
-            Debug.Log($"Loading OBJ model from: {path}");
+            if (manifest.defaultAlignment == null) return;
 
-            // Placeholder for OBJ loading
-            GameObject model = CreatePlaceholderModel(manifest);
-
-            if (model != null)
+            if (manifest.defaultAlignment.position != null && manifest.defaultAlignment.position.Length == 3)
             {
-                model.name = manifest.name;
-                loadedModels[manifest.id] = model;
-                ApplyPartMappings(model, manifest);
-                OnModelLoaded?.Invoke(model, manifest);
+                root.transform.localPosition = new Vector3(
+                    manifest.defaultAlignment.position[0],
+                    manifest.defaultAlignment.position[1],
+                    manifest.defaultAlignment.position[2]
+                );
             }
 
-            yield return null;
-        }
-
-        /// <summary>
-        /// Creates a placeholder model for testing when actual model loading isn't available.
-        /// </summary>
-        private GameObject CreatePlaceholderModel(EngineManifest manifest)
-        {
-            GameObject root = new GameObject(manifest.name);
-
-            // Create placeholder parts based on part mappings
-            if (manifest.partMappings != null && manifest.partMappings.Length > 0)
+            if (manifest.defaultAlignment.rotation != null && manifest.defaultAlignment.rotation.Length == 3)
             {
-                float offset = 0;
-                foreach (var mapping in manifest.partMappings)
-                {
-                    GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    part.name = mapping.nodeNameInModel;
-                    part.transform.SetParent(root.transform);
-                    part.transform.localPosition = new Vector3(offset, 0, 0);
-                    part.transform.localScale = Vector3.one * 0.1f;
-
-                    // Store part ID in a component for later retrieval
-                    PartIdentifier identifier = part.AddComponent<PartIdentifier>();
-                    identifier.PartId = mapping.partId;
-                    identifier.NodeName = mapping.nodeNameInModel;
-
-                    if (defaultMaterial != null)
-                    {
-                        part.GetComponent<Renderer>().material = defaultMaterial;
-                    }
-
-                    offset += 0.15f;
-                }
-            }
-            else
-            {
-                // Create a single placeholder cube
-                GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                cube.name = "EnginePlaceholder";
-                cube.transform.SetParent(root.transform);
-                cube.transform.localScale = Vector3.one * 0.3f;
-
-                if (defaultMaterial != null)
-                {
-                    cube.GetComponent<Renderer>().material = defaultMaterial;
-                }
+                root.transform.localEulerAngles = new Vector3(
+                    manifest.defaultAlignment.rotation[0],
+                    manifest.defaultAlignment.rotation[1],
+                    manifest.defaultAlignment.rotation[2]
+                );
             }
 
-            // Apply default alignment if specified
-            if (manifest.defaultAlignment != null)
+            if (manifest.defaultAlignment.scale != null && manifest.defaultAlignment.scale.Length == 3)
             {
-                if (manifest.defaultAlignment.position != null && manifest.defaultAlignment.position.Length == 3)
-                {
-                    root.transform.position = new Vector3(
-                        manifest.defaultAlignment.position[0],
-                        manifest.defaultAlignment.position[1],
-                        manifest.defaultAlignment.position[2]
-                    );
-                }
-
-                if (manifest.defaultAlignment.rotation != null && manifest.defaultAlignment.rotation.Length == 3)
-                {
-                    root.transform.eulerAngles = new Vector3(
-                        manifest.defaultAlignment.rotation[0],
-                        manifest.defaultAlignment.rotation[1],
-                        manifest.defaultAlignment.rotation[2]
-                    );
-                }
-
-                if (manifest.defaultAlignment.scale != null && manifest.defaultAlignment.scale.Length == 3)
-                {
-                    root.transform.localScale = new Vector3(
-                        manifest.defaultAlignment.scale[0],
-                        manifest.defaultAlignment.scale[1],
-                        manifest.defaultAlignment.scale[2]
-                    );
-                }
+                root.transform.localScale = new Vector3(
+                    manifest.defaultAlignment.scale[0],
+                    manifest.defaultAlignment.scale[1],
+                    manifest.defaultAlignment.scale[2]
+                );
             }
-
-            return root;
         }
 
         /// <summary>

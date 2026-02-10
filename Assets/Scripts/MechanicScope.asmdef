@@ -4,7 +4,8 @@
     "references": [
         "Unity.TextMeshPro",
         "Unity.XR.ARFoundation",
-        "Unity.XR.ARSubsystems"
+        "Unity.XR.ARSubsystems",
+        "glTFast"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
