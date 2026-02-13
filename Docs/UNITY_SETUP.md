@@ -88,9 +88,9 @@ Assets/
 │   ├── Core/                        # AR, procedures, parts, progress, model loading
 │   ├── Data/                        # SQLite, repositories, data manager
 │   ├── UI/                          # Screen controllers and UI components
-│   ├── Voice/                       # Voice commands (deferred)
-│   ├── Accessibility/               # Text scaling, haptics (deferred)
-│   ├── Performance/                 # FPS monitoring, asset optimization (deferred)
+│   ├── Voice/                       # Voice commands (scaffolded, not yet functional)
+│   ├── Accessibility/               # Text scaling, haptics, screen reader support
+│   ├── Performance/                 # FPS monitoring, asset optimization, LOD (partial)
 │   ├── Utils/                       # Media loading
 │   └── Editor/                      # Scene setup tool, procedure editor
 ├── Resources/

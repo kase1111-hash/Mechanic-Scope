@@ -20,56 +20,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2026-01-17
 
 ### Added
-- **Voice Commands**: Hands-free control with on-device speech recognition
-  - "Next step" / "Done" - complete current step
-  - "Go back" - undo last step
-  - "What is this" - part identification mode
-  - "Show/hide details" - toggle step card
-  - Platform-specific recognizers (iOS SFSpeechRecognizer, Android SpeechRecognizer)
-  - Audio feedback for command recognition
-- **Procedure Editor**: Desktop tool for authoring procedures
-  - Visual dependency graph editor
-  - Step validation and error checking
-  - Media attachment support
-  - Export/import functionality
-- **Step Media Support**: Images and videos in procedure steps
-  - Inline image display in step cards
-  - Video playback support
-  - Media loader with caching
-- **Procedure Sharing**: Export/import procedures for community sharing
-  - JSON export with media bundling
-  - Import validation and conflict resolution
-- **Alignment Assistance**: Visual guides for model alignment
-  - Alignment confidence indicator
-  - Guide overlays for positioning
+- **Voice Commands** *(scaffolded — not yet functional)*: Command manager and recognizer interfaces exist, but platform-specific recognizer classes (iOS/Android) are not implemented. See `Assets/Scripts/Voice/`.
+- **Procedure Editor**: Unity Editor window for authoring procedures (`Window > MechanicScope > Procedure Editor`)
+  - Step editing and validation
+  - Basic dependency configuration
+- **Step Media Support** *(scaffolded)*: Data model and media loader utility exist but UI display is not wired up
 - **Accessibility Features**
   - Screen reader support (VoiceOver/TalkBack)
   - Adjustable font sizes
   - High contrast mode
-  - Accessible button and text components
-- **Performance Optimization**
-  - LOD (Level of Detail) manager for complex models
-  - Asset optimizer for mobile performance
-  - Performance monitoring and metrics
-- **App Store Preparation**
-  - Build configuration management
-  - Screenshot capture utility
-  - App store metadata configuration
-- **Comprehensive Test Suite**
-  - End-to-end integration tests
-  - Accessibility tests
-  - Performance benchmarks
-  - Voice command tests
+  - Native haptics (iOS DllImport, Android JNI)
+- **Performance Monitoring**
+  - FPS, memory, and battery tracking via Unity Profiler APIs
+  - LOD manager *(mesh simplification is a stub — returns input unchanged)*
+  - Asset optimizer
+- **Test Suite** *(mock-based only)*
+  - Tests for procedure runner, part database, voice commands, performance, accessibility
+  - All tests use mock objects; no integration tests against real Unity components
 
 ### Changed
-- Improved UI responsiveness on lower-end devices
-- Enhanced part highlighting shader for better visibility
-- Optimized model loading pipeline
+- Enhanced part highlighting shader (Fresnel + outline + pulse animation)
 
-### Fixed
-- Memory leak when switching between engine models
-- Touch gesture conflicts during alignment
-- Progress not saving on app background
+### Known Issues
+- Voice command recognizers reference classes that don't exist — feature is non-functional
+- LOD `SimplifyMesh()` is a no-op placeholder
+- Test suite tests mock objects, not production code paths
 
 ---
 
@@ -127,10 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AR session management
   - Camera feed with model overlay
   - Pause/resume AR tracking
-- **3D Model Loading**
-  - GLB format support (via GLTFUtility)
-  - FBX and OBJ format support
-  - Runtime model import
+- **3D Model Loading** *(placeholder — loads cubes instead of real models)*
+  - glTFast package integrated for GLB/glTF support
+  - Loader scaffolded but falls back to placeholder geometry when no `.glb` file is present
 - **Manual Alignment Controls**
   - Single finger drag to rotate
   - Two finger pinch to scale
@@ -183,7 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Milestone |
 |---------|------|-----------|
-| 0.3.0 | 2026-01-17 | Phase 3: Polish & Advanced Features |
+| 0.3.0 | 2026-01-17 | Phase 3: Polish & Advanced Features (partial — see known issues) |
 | 0.2.0 | 2026-01-15 | Phase 2: Core Experience |
 | 0.1.0 | 2026-01-13 | Phase 1: Foundation |
 | 0.0.1 | 2026-01-10 | Initial Commit |

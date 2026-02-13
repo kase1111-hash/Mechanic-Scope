@@ -22,7 +22,7 @@ This guide explains how to add new engine models to Mechanic Scope, from obtaini
 
 Each engine in Mechanic Scope consists of:
 
-1. **3D Model** - A GLB, FBX, or OBJ file representing the engine
+1. **3D Model** - A GLB or glTF file representing the engine
 2. **Engine Manifest** - A JSON file describing the engine and mapping model nodes to parts
 3. **Procedures** - JSON files defining repair/maintenance tasks
 4. **Thumbnail** - An optional preview image for the engine selection screen
@@ -35,9 +35,10 @@ Each engine in Mechanic Scope consists of:
 
 | Format | Extension | Notes |
 |--------|-----------|-------|
-| glTF Binary | `.glb` | **Recommended** - Best compatibility and file size |
-| FBX | `.fbx` | Good support, larger files |
-| OBJ | `.obj` | Basic support, no animations |
+| glTF Binary | `.glb` | **Recommended** — Best compatibility and file size |
+| glTF | `.gltf` | Supported — text-based variant with separate binary/texture files |
+
+> **Note:** Mechanic Scope uses [glTFast](https://docs.unity3d.com/Packages/com.unity.cloud.gltfast@6.6/) for model loading. Only glTF/GLB formats are supported. FBX and OBJ files must be converted to GLB first (e.g., using Blender: File > Export > glTF 2.0).
 
 ### Model Guidelines
 
@@ -368,7 +369,7 @@ If you'd like to share your engine model and procedures:
 2. Test thoroughly on at least one device
 3. Include comprehensive part mappings
 4. Add 2-3 common procedures
-5. Submit a Pull Request following [CONTRIBUTING.md](./CONTRIBUTING.md)
+5. Submit a Pull Request with a description of what you've added
 
 ---
 
@@ -376,4 +377,3 @@ If you'd like to share your engine model and procedures:
 
 - [PROCEDURE_FORMAT.md](./PROCEDURE_FORMAT.md) - Detailed procedure specification
 - [UNITY_SETUP.md](./UNITY_SETUP.md) - Development environment setup
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution guidelines

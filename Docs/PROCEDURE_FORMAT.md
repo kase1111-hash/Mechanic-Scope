@@ -476,18 +476,11 @@ Be specific about tools:
 3. **No Circular Dependencies**: Steps cannot depend on themselves (directly or indirectly)
 4. **At Least One Starting Step**: At least one step must have `requires: []`
 
-### JSON Schema
-
-A JSON Schema for validation is available at:
-```
-Assets/Editor/ProcedureSchema.json
-```
-
 ### Validation in Unity
 
-The Procedure Editor window validates procedures before saving:
+The Procedure Editor window (in the Unity Editor) can validate procedures:
 
-1. **Window → Mechanic Scope → Procedure Editor**
+1. **MechanicScope → Procedure Editor** (from the Unity menu bar)
 2. Load or create a procedure
 3. Click **Validate** to check for errors
 
@@ -503,33 +496,26 @@ The Procedure Editor window validates procedures before saving:
 
 ---
 
-## Exporting and Sharing
+## Sharing Procedures
 
-Procedures can be exported for sharing:
+> **Note:** In-app export/import is not yet implemented. For now, procedures are shared by manually copying JSON files.
 
-1. In the app, go to **Settings → Export Procedure**
-2. Select the procedure to export
-3. Choose export format (JSON or compressed archive with media)
+To share a procedure:
+1. Copy the procedure `.json` file from `Assets/StreamingAssets/Engines/[engine_id]/procedures/`
+2. Include any referenced media files (images, videos) from the same directory
+3. Share the files along with a note describing:
+   - Engine model/year this was tested on
+   - Any special notes or variations
 
-To import:
-1. **Settings → Import Procedure**
-2. Select the procedure file
-3. Choose target engine (or create new)
-
-### Community Sharing Format
-
-When sharing procedures with the community, include:
-- The procedure JSON file
-- Any referenced images/media
-- A brief README with:
-  - Engine model/year this was tested on
-  - Any special notes or variations
-  - Your contact for questions
+To import a shared procedure:
+1. Place the `.json` file in the target engine's `procedures/` directory
+2. Copy any referenced media files to the same location
+3. Restart the app to pick up the new procedure
 
 ---
 
 ## Related Documentation
 
 - [ADDING_ENGINES.md](./ADDING_ENGINES.md) - How to add engine models
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution guidelines
+- [UNITY_SETUP.md](./UNITY_SETUP.md) - Development environment setup
 - [SPEC_SHEET.md](../SPEC_SHEET.md) - Full technical specification
