@@ -26,13 +26,15 @@ Mechanic Scope overlays part identification and procedural guidance directly ont
 
 ## Core Features
 
-| Feature | Description |
-|---------|-------------|
-| **Part Overlay** | Tap any visible component to see its name and basic specs |
-| **Procedure Mode** | Select a task (e.g., "Replace alternator") and follow highlighted removal steps |
-| **Progress Tracking** | Check off steps as you go; pick up where you left off |
-| **Offline Operation** | All procedure data stored locally — no cell signal required |
-| **Voice Commands** | Optional hands-free control (say "next step" or "what is this part") |
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Part Overlay** | Working | Tap any visible component to see its name and basic specs |
+| **Procedure Mode** | Working | Select a task (e.g., "Replace alternator") and follow highlighted removal steps |
+| **Progress Tracking** | Working | Check off steps as you go; pick up where you left off |
+| **Offline Operation** | Working | All procedure data stored locally — no cell signal required |
+| **Voice Commands** | Planned | Hands-free control (say "next step" or "what is this part") — not yet functional |
+
+> **Note:** 3D model loading currently uses placeholder geometry. Real GLB model rendering via glTFast is implemented but requires a user-supplied `.glb` file to function. See [Development Status](#development-status) for details.
 
 ---
 
@@ -78,10 +80,11 @@ Mechanic Scope overlays part identification and procedural guidance directly ont
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| AR Runtime | Unity + AR Foundation | Cross-platform AR (iOS/Android) |
-| 3D Rendering | Unity URP | Lightweight rendering for mobile |
+| AR Runtime | Unity 2022.3 LTS + AR Foundation 5.1.5 | Cross-platform AR (iOS/Android) |
+| 3D Rendering | Unity URP 14.0.11 | Lightweight rendering for mobile |
+| 3D Model Loading | glTFast 6.6.0 | Runtime GLB/glTF import |
 | Procedure Data | JSON + SQLite | Portable, offline-capable storage |
-| Speech (optional) | On-device STT | Whisper.cpp or platform-native |
+| Speech (planned) | On-device STT | Platform-native (not yet implemented) |
 | Part Recognition | YOLOv8 (future) | Visual identification without model alignment |
 
 ---
@@ -89,25 +92,28 @@ Mechanic Scope overlays part identification and procedural guidance directly ont
 ## Project Structure
 
 ```
-mechanicscope/
+Mechanic-Scope/
 ├── Assets/
-│   ├── Engines/           # User-imported 3D engine models
-│   ├── Procedures/        # JSON procedure graphs per engine
-│   ├── UI/                # Interface prefabs and sprites
-│   └── Scripts/
-│       ├── ARAlignment.cs
-│       ├── ProcedureRunner.cs
-│       ├── PartDatabase.cs
-│       └── ProgressTracker.cs
-├── Data/
-│   ├── parts.sqlite       # Part names, specs, cross-references
-│   └── procedures/        # Per-engine procedure JSON files
+│   ├── Scripts/
+│   │   ├── Core/              # AR alignment, procedure runner, part database, model loading
+│   │   ├── Data/              # SQLite wrapper, repositories (parts, progress)
+│   │   ├── UI/                # Screen controllers, popups, procedure cards
+│   │   ├── Voice/             # Voice command manager (planned, not yet functional)
+│   │   ├── Accessibility/     # Screen reader, haptics, text scaling
+│   │   ├── Performance/       # FPS monitoring, LOD manager, asset optimizer
+│   │   ├── Utils/             # Media loader utility
+│   │   └── Editor/            # Scene setup tool, procedure editor window
+│   ├── Shaders/               # URP part highlight shader
+│   ├── Resources/             # DefaultPartsData.json (bundled part data)
+│   ├── StreamingAssets/
+│   │   └── Engines/           # Engine models + procedure JSON files
+│   └── Tests/                 # Runtime and editor tests
 ├── Docs/
-│   ├── ADDING_ENGINES.md
-│   ├── PROCEDURE_FORMAT.md
-│   └── CONTRIBUTING.md
-├── Tools/
-│   └── procedure-editor/  # Desktop tool for authoring procedures
+│   ├── ADDING_ENGINES.md      # Engine model import guide
+│   ├── PROCEDURE_FORMAT.md    # Procedure JSON specification
+│   └── UNITY_SETUP.md         # Development environment setup
+├── Packages/
+│   └── manifest.json          # Unity package dependencies
 └── README.md
 ```
 
@@ -126,7 +132,7 @@ Mechanic Scope requires 3D engine models that you provide. Options include:
 
 The app doesn't need manufacturer-perfect CAD. A simplified model with correct component positions works fine for overlay alignment and procedure guidance.
 
-**Supported formats:** .glb (preferred), .fbx, .obj
+**Supported formats:** .glb / .gltf (via glTFast)
 
 ---
 
@@ -175,26 +181,30 @@ The `requires` field creates the dependency graph. Steps 2 and 3 can happen in e
 
 ---
 
-## Development Roadmap
+## Development Status
 
-### Phase 1: Foundation
-- [ ] Basic AR alignment for static engine model
-- [ ] Part tap-to-identify from model metadata
-- [ ] Simple linear procedure display
+### What Works
+- [x] AR session management and camera feed
+- [x] Manual model alignment (rotate, scale, translate via touch gestures)
+- [x] Dependency-aware procedure engine with graph-based step resolution
+- [x] Part tap-to-identify via raycasting
+- [x] SQLite-backed part database with full-text search
+- [x] Progress persistence and repair history logging
+- [x] Part highlighting shader (URP Fresnel + outline)
+- [x] Performance monitoring (FPS, memory, battery)
+- [x] Accessibility features (native haptics, text scaling, high contrast)
 
-### Phase 2: Core Experience
-- [ ] Dependency-aware procedure engine
-- [ ] Progress persistence across sessions
-- [ ] Multiple engine model support
-
-### Phase 3: Polish
-- [ ] Procedure editor tool (desktop)
-- [ ] Voice commands (optional module)
-- [ ] Community procedure sharing format
+### What Needs Work
+- [ ] **3D model loading** — currently generates placeholder geometry; glTFast is integrated but no `.glb` file is bundled
+- [ ] **Voice commands** — code references platform recognizers that are not yet implemented
+- [ ] **LOD manager** — mesh simplification is a stub (returns input unchanged)
+- [ ] **App initialization** — `InitializeARSystems()` is a placeholder
 
 ### Future Consideration
 - [ ] ML-based part recognition (reduce reliance on manual alignment)
 - [ ] OBD-II integration for diagnostic context
+- [ ] Multi-device progress sync
+- [ ] Community procedure marketplace
 
 ---
 
@@ -215,7 +225,7 @@ Mechanic Scope is released under the **MIT License**.
 3. Commit changes with clear messages
 4. Open a pull request with a description of what you've added
 
-See `Docs/CONTRIBUTING.md` for code style and testing guidelines.
+See `Docs/UNITY_SETUP.md` for development environment setup.
 
 ---
 

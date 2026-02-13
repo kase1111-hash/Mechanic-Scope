@@ -467,7 +467,7 @@ public class UIState
 
 ---
 
-## 5. Voice Command Module (Optional)
+## 5. Voice Command Module (Optional — Not Yet Functional)
 
 ### 5.1 Supported Commands
 | Phrase | Action |
@@ -485,37 +485,67 @@ public class UIState
 - Use on-device speech recognition (no network required)
 - iOS: `SFSpeechRecognizer`
 - Android: `SpeechRecognizer` API
-- Unity wrapper: Custom native plugin or Whisper.cpp integration
+- Unity wrapper: Custom native plugin required (not yet built)
 - Wake word optional (can use always-listening or push-to-talk)
+
+> **Current status:** The `VoiceCommandManager` class and recognizer interfaces exist in `Assets/Scripts/Voice/`, but the platform-specific recognizer implementations (`IOSVoiceRecognizer`, `AndroidVoiceRecognizer`) reference classes that do not exist. Native plugins need to be created before this module is functional.
 
 ---
 
 ## 6. File System Structure
 
+### Bundled Data (StreamingAssets — read-only)
+
+```
+Assets/StreamingAssets/Engines/
+└── [engine_id]/
+    ├── engine.json              # Engine manifest (required)
+    ├── [model_file].glb         # 3D model (required, user-supplied)
+    ├── thumbnail.png            # Preview image (optional)
+    └── procedures/
+        ├── oil_change.json
+        ├── replace_alternator.json
+        └── ...
+```
+
+### Runtime Data (Application.persistentDataPath)
+
 ```
 Application.persistentDataPath/
-├── engines/
-│   ├── gm_ls_gen4/
-│   │   ├── engine.json          # Engine manifest
-│   │   ├── model.glb            # 3D model
-│   │   ├── thumbnail.png        # Preview image
-│   │   └── procedures/
-│   │       ├── replace_alternator.json
-│   │       ├── replace_starter.json
-│   │       └── ...
-│   └── honda_k24/
-│       └── ...
-├── database/
-│   ├── parts.sqlite             # Part information database
-│   └── progress.sqlite          # User progress database
-├── cache/
-│   └── model_cache/             # Processed model data
-└── preferences.json             # User settings
+└── mechanic_scope.db           # SQLite database containing:
+                                #   - parts (part metadata)
+                                #   - part_specs (key-value specifications)
+                                #   - part_cross_refs (OEM/aftermarket refs)
+                                #   - engine_parts (engine-to-part mappings)
+                                #   - procedure_progress (saved session progress)
+                                #   - repair_history (completed repair logs)
+                                #   - preferences (user settings)
 ```
+
+> **Note:** All persistent data is stored in a single SQLite database, not separate files. Preferences are stored in the `preferences` table, not a separate JSON file.
 
 ---
 
-## 7. Implementation Phases
+## 7. Implementation Status
+
+> The following table reflects the actual state of each component as of v0.3.0.
+
+| Component | Specified In | Status | Notes |
+|-----------|-------------|--------|-------|
+| AR alignment & gestures | §2.1 | **Working** | Production-quality touch controls and state machine |
+| Procedure engine | §2.2 | **Working** | Full dependency resolution, step sequencing |
+| Part database (SQLite) | §2.3 | **Working** | Full-text search, migrations, transactions |
+| Progress tracker | §2.4 | **Working** | Save/load progress, repair history, preferences |
+| 3D model loading | §2.1 | **Stub** | Creates placeholder cubes; glTFast integrated but no `.glb` bundled |
+| Voice commands | §5 | **Broken** | Manager exists but platform recognizers are missing |
+| Part highlighting | §4.3 | **Working** | URP shader with Fresnel outline + pulse animation |
+| Performance monitor | §9 | **Working** | FPS, memory, battery tracking |
+| LOD manager | §9 | **Stub** | `SimplifyMesh()` is a no-op |
+| UI screens & navigation | §4 | **Working** | 8-mode state machine, all screens implemented |
+
+---
+
+## 8. Implementation Phases
 
 ### Phase 1: Foundation (MVP)
 **Goal:** Working AR alignment with static model and linear procedure display
@@ -573,20 +603,20 @@ Application.persistentDataPath/
 
 ---
 
-## 8. Testing Strategy
+## 9. Testing Strategy
 
-### 8.1 Unit Tests
+### 9.1 Unit Tests
 - Procedure dependency resolution
 - Part database queries
 - Progress save/load
 - JSON parsing
 
-### 8.2 Integration Tests
+### 9.2 Integration Tests
 - AR session lifecycle
 - Model loading pipeline
 - Database migrations
 
-### 8.3 Manual Test Cases
+### 9.3 Manual Test Cases
 | Test Case | Steps | Expected Result |
 |-----------|-------|-----------------|
 | Model Alignment | Load model, use gestures to align | Model follows finger input smoothly |
@@ -597,7 +627,7 @@ Application.persistentDataPath/
 
 ---
 
-## 9. Performance Targets
+## 10. Performance Targets
 
 | Metric | Target |
 |--------|--------|
@@ -610,7 +640,7 @@ Application.persistentDataPath/
 
 ---
 
-## 10. Security & Privacy
+## 11. Security & Privacy
 
 - **No network required:** All data stored locally
 - **No user accounts:** No PII collected
@@ -623,7 +653,7 @@ Application.persistentDataPath/
 
 ---
 
-## 11. Known Limitations & Future Work
+## 12. Known Limitations & Future Work
 
 ### Current Limitations
 - Requires manual model alignment (no automatic recognition)
@@ -643,11 +673,16 @@ Application.persistentDataPath/
 
 | Package | Version | License | Purpose |
 |---------|---------|---------|---------|
-| AR Foundation | 5.x | Unity EULA | AR abstraction |
-| GLTFUtility | Latest | MIT | GLB import |
-| SQLite4Unity3d | Latest | Public Domain | SQLite wrapper |
-| UniTask | Latest | MIT | Async/await support |
-| DOTween | Latest | Free version | UI animations |
+| AR Foundation | 5.1.5 | Unity EULA | AR abstraction |
+| ARCore XR Plugin | 5.1.5 | Unity EULA | Android AR |
+| ARKit XR Plugin | 5.1.5 | Unity EULA | iOS AR |
+| glTFast | 6.6.0 | Unity Companion License | GLB/glTF model loading |
+| Universal Render Pipeline | 14.0.11 | Unity EULA | Mobile-optimized rendering |
+| TextMeshPro | 3.0.9 | Unity EULA | UI text rendering |
+| Input System | 1.8.2 | Unity EULA | Touch input handling |
+| Mono.Data.Sqlite | (bundled with Unity) | MIT | SQLite database access |
+
+> **Note:** SQLite access uses `Mono.Data.Sqlite` (bundled with Unity's Mono runtime), not a third-party wrapper.
 
 ---
 

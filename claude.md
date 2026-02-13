@@ -9,8 +9,7 @@ AR-powered engine repair assistant for mobile devices (iOS/Android). Overlays 3D
 - **Rendering:** Universal Render Pipeline (URP) 14.x
 - **Language:** C# (.NET Standard 2.1)
 - **Database:** SQLite 3.x (local persistence)
-- **Async:** UniTask
-- **3D Models:** GLB (preferred), FBX, OBJ via GLTFUtility
+- **3D Models:** GLB/glTF via glTFast (com.unity.cloud.gltfast)
 - **Data Format:** JSON for procedures and configuration
 
 ## Project Structure
@@ -76,7 +75,7 @@ Assets/
 
 - Use `[SerializeField]` for Inspector-exposed private fields
 - Cache component references in `Awake()` or `Start()`
-- Prefer `async/await` with UniTask over coroutines
+- Prefer `async/await` or coroutines for async operations
 - Subscribe to events in `Start()`, unsubscribe in `OnDestroy()`
 
 ## Core Data Structures
@@ -136,12 +135,26 @@ Procedure file (`procedures/*.json`):
 - **Offline-first:** No cloud, no accounts, no analytics - all data stored locally
 - **Platforms:** iOS 14+ (ARKit), Android 8.0+ (ARCore)
 - **Permissions:** Camera (AR), Microphone (voice), Storage (imports)
-- **Current version:** 0.3.0 (Phase 3 - Polish and Advanced Features complete)
+- **Current version:** 0.3.0 (see Development Status below for what's working vs. stubbed)
+
+## Development Status
+
+| Module | Status | Notes |
+|--------|--------|-------|
+| AR alignment & touch controls | Working | Production-quality gesture handling |
+| Procedure runner (dependency resolution) | Working | Full graph-based step sequencing |
+| SQLite database & repositories | Working | Migrations, transactions, full-text search |
+| Part highlighting shader | Working | URP Fresnel + outline + pulse animation |
+| Performance monitor | Working | FPS, memory, battery tracking |
+| Accessibility (haptics, text scaling) | Working | Native iOS/Android haptics |
+| 3D model loading | **Stub** | Creates placeholder cubes; glTFast integrated but no `.glb` bundled |
+| Voice commands | **Broken** | References non-existent platform recognizer classes |
+| LOD manager (mesh simplification) | **Stub** | Returns input unchanged |
+| App initializer (AR systems) | **Stub** | Logs and yields null |
 
 ## Documentation
 
 - `SPEC_SHEET.md` - Technical specification and architecture
-- `Docs/CONTRIBUTING.md` - Contribution guidelines
 - `Docs/ADDING_ENGINES.md` - Engine model import guide
 - `Docs/PROCEDURE_FORMAT.md` - Procedure JSON specification
-- `SECURITY.md` - Privacy policy and vulnerability reporting
+- `Docs/UNITY_SETUP.md` - Development environment setup
