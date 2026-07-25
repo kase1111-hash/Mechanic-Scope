@@ -34,7 +34,7 @@ EOF
 fi
 
 echo "Test project: Tools/HeadlessTests"
-echo "Sources:      Assets/Scripts/Core"
+echo "Sources:      Assets/Scripts (all runtime scripts, compile-checked)"
 echo "Tests:        Assets/Tests/EditMode"
 echo ""
 
@@ -55,9 +55,10 @@ else
 fi
 
 echo ""
-echo "Note: this harness covers engine-independent logic (procedure sequencing, JSON"
-echo "parsing, part lookup, shipped-data validation). Behaviour that genuinely depends"
-echo "on Unity - rendering, AR, coroutine timing - must still be verified in the Editor:"
+echo "Note: this run compile-checks every runtime script and executes the edit-mode"
+echo "tests (procedure sequencing, JSON parsing, part lookup, shipped-data validation)."
+echo "Behaviour that genuinely depends on Unity - rendering, AR, coroutine timing - must"
+echo "still be verified in the Editor:"
 echo "  Window > General > Test Runner"
 
 exit $STATUS

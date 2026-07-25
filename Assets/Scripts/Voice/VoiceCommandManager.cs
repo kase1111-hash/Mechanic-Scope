@@ -108,91 +108,92 @@ namespace MechanicScope.Voice
 
         private void RegisterDefaultCommands()
         {
+            // Argument order is (description, action, ...phrases) — see RegisterCommand.
             // Navigation commands
-            RegisterCommand("next step", "done", "complete", "finished", () =>
+            RegisterCommand("Completes the current step", () =>
             {
                 if (procedureRunner?.ActiveStep != null)
                 {
                     procedureRunner.CompleteStep(procedureRunner.ActiveStep.id);
                     Speak("Step completed");
                 }
-            }, "Completes the current step");
+            }, "next step", "done", "complete", "finished");
 
-            RegisterCommand("previous step", "go back", "undo", () =>
+            RegisterCommand("Goes to the previous step", () =>
             {
                 procedureRunner?.PreviousStep();
                 Speak("Previous step");
-            }, "Goes to the previous step");
+            }, "previous step", "go back", "undo");
 
-            RegisterCommand("skip", "next", () =>
+            RegisterCommand("Moves to the next available step without completing", () =>
             {
                 procedureRunner?.NextStep();
                 Speak("Next step");
-            }, "Moves to the next available step without completing");
+            }, "skip", "next");
 
             // Information commands
-            RegisterCommand("what is this", "identify", "what part", () =>
+            RegisterCommand("Enters part identification mode", () =>
             {
                 Speak("Tap on a part to identify it");
-            }, "Enters part identification mode");
+            }, "what is this", "identify", "what part");
 
-            RegisterCommand("show details", "more info", "expand", () =>
+            RegisterCommand("Expands the current step details", () =>
             {
                 // Trigger UI expansion
                 Speak("Showing details");
-            }, "Expands the current step details");
+            }, "show details", "more info", "expand");
 
-            RegisterCommand("hide details", "collapse", "less", () =>
+            RegisterCommand("Collapses the step details", () =>
             {
                 // Trigger UI collapse
                 Speak("Hiding details");
-            }, "Collapses the step details");
+            }, "hide details", "collapse", "less");
 
-            RegisterCommand("what tools", "tools needed", "what do i need", () =>
+            RegisterCommand("Reads the tools needed for the current step", () =>
             {
                 ReadCurrentStepTools();
-            }, "Reads the tools needed for the current step");
+            }, "what tools", "tools needed", "what do i need");
 
-            RegisterCommand("read warnings", "any warnings", "safety", () =>
+            RegisterCommand("Reads any warnings for the current step", () =>
             {
                 ReadCurrentStepWarnings();
-            }, "Reads any warnings for the current step");
+            }, "read warnings", "any warnings", "safety");
 
-            RegisterCommand("read step", "repeat", "say again", () =>
+            RegisterCommand("Reads the current step aloud", () =>
             {
                 ReadCurrentStep();
-            }, "Reads the current step aloud");
+            }, "read step", "repeat", "say again");
 
             // Control commands
-            RegisterCommand("stop listening", "stop", "quiet", () =>
+            RegisterCommand("Disables voice commands", () =>
             {
                 StopListening();
                 Speak("Voice commands disabled");
-            }, "Disables voice commands");
+            }, "stop listening", "stop", "quiet");
 
-            RegisterCommand("help", "commands", "what can i say", () =>
+            RegisterCommand("Lists available voice commands", () =>
             {
                 ListAvailableCommands();
-            }, "Lists available voice commands");
+            }, "help", "commands", "what can i say");
 
             // Alignment commands
-            RegisterCommand("lock alignment", "lock model", "lock", () =>
+            RegisterCommand("Locks the model alignment", () =>
             {
                 arAlignment?.LockAlignment();
                 Speak("Alignment locked");
-            }, "Locks the model alignment");
+            }, "lock alignment", "lock model", "lock");
 
-            RegisterCommand("unlock alignment", "unlock model", "adjust", () =>
+            RegisterCommand("Unlocks the model for adjustment", () =>
             {
                 arAlignment?.UnlockAlignment();
                 Speak("Alignment unlocked, you can adjust the model");
-            }, "Unlocks the model for adjustment");
+            }, "unlock alignment", "unlock model", "adjust");
 
-            RegisterCommand("reset alignment", "reset model", "reset", () =>
+            RegisterCommand("Resets the model to default position", () =>
             {
                 arAlignment?.ResetAlignment();
                 Speak("Alignment reset");
-            }, "Resets the model to default position");
+            }, "reset alignment", "reset model", "reset");
         }
 
         /// <summary>
@@ -214,40 +215,10 @@ namespace MechanicScope.Voice
             }
         }
 
-        /// <summary>
-        /// Registers a command with the first phrase being the primary.
-        /// </summary>
-        public void RegisterCommand(params object[] args)
-        {
-            List<string> phrases = new List<string>();
-            Action action = null;
-            string description = "";
-
-            foreach (var arg in args)
-            {
-                if (arg is string s)
-                {
-                    // Check if it's a description (last string before action)
-                    if (action != null)
-                    {
-                        description = s;
-                    }
-                    else
-                    {
-                        phrases.Add(s);
-                    }
-                }
-                else if (arg is Action a)
-                {
-                    action = a;
-                }
-            }
-
-            if (phrases.Count > 0 && action != null)
-            {
-                RegisterCommand(description, action, phrases.ToArray());
-            }
-        }
+        // A `RegisterCommand(params object[] args)` overload used to sit here, intended to accept
+        // (...phrases, action, description) in any order. It could never work: a lambda has no
+        // natural conversion to object, so that overload was never applicable, and every call site
+        // bound to the typed overload above and failed to compile. Callers now use the typed form.
 
         /// <summary>
         /// Starts listening for voice commands.

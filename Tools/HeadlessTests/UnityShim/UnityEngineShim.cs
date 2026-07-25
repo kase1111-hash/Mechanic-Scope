@@ -65,6 +65,12 @@ namespace UnityEngine
         public static float Abs(float v) => Math.Abs(v);
         public static float Min(float a, float b) => Math.Min(a, b);
         public static float Max(float a, float b) => Math.Max(a, b);
+
+        // Unity's integer overloads matter: they keep `int x = Mathf.Min(a, b)` compiling.
+        public static int Clamp(int v, int min, int max) => v < min ? min : (v > max ? max : v);
+        public static int Abs(int v) => Math.Abs(v);
+        public static int Min(int a, int b) => Math.Min(a, b);
+        public static int Max(int a, int b) => Math.Max(a, b);
         public static float Sin(float v) => (float)Math.Sin(v);
         public static float Cos(float v) => (float)Math.Cos(v);
         public static float Sqrt(float v) => (float)Math.Sqrt(v);
@@ -84,6 +90,26 @@ namespace UnityEngine
         public Vector2(float x, float y) { this.x = x; this.y = y; }
         public static Vector2 zero => new Vector2(0f, 0f);
         public static Vector2 one => new Vector2(1f, 1f);
+        public static Vector2 up => new Vector2(0f, 1f);
+        public static Vector2 right => new Vector2(1f, 0f);
+
+        public float magnitude => Mathf.Sqrt(x * x + y * y);
+        public float sqrMagnitude => x * x + y * y;
+
+        public static Vector2 operator +(Vector2 a, Vector2 b) => new Vector2(a.x + b.x, a.y + b.y);
+        public static Vector2 operator -(Vector2 a, Vector2 b) => new Vector2(a.x - b.x, a.y - b.y);
+        public static Vector2 operator *(Vector2 a, float d) => new Vector2(a.x * d, a.y * d);
+        public static Vector2 operator *(float d, Vector2 a) => a * d;
+        public static Vector2 operator /(Vector2 a, float d) => new Vector2(a.x / d, a.y / d);
+
+        public static float Distance(Vector2 a, Vector2 b) => (a - b).magnitude;
+        public static Vector2 Lerp(Vector2 a, Vector2 b, float t) =>
+            new Vector2(Mathf.Lerp(a.x, b.x, t), Mathf.Lerp(a.y, b.y, t));
+
+        // Unity defines implicit conversions in both directions between Vector2 and Vector3.
+        public static implicit operator Vector3(Vector2 v) => new Vector3(v.x, v.y, 0f);
+        public static implicit operator Vector2(Vector3 v) => new Vector2(v.x, v.y);
+
         public override string ToString() => $"({x}, {y})";
     }
 
@@ -157,6 +183,31 @@ namespace UnityEngine
         internal bool destroyed;
 
         public int GetInstanceID() => instanceId;
+
+        public static void DontDestroyOnLoad(Object target) { }
+
+        /// <summary>
+        /// Shallow clone. Unity deep-copies the whole hierarchy; nothing under test depends on
+        /// that, so this returns a fresh empty GameObject or the same component type.
+        /// </summary>
+        public static T Instantiate<T>(T original) where T : Object
+        {
+            if (original is GameObject go) return (T)(Object)new GameObject(go.name + "(Clone)");
+            return original;
+        }
+
+        public static T Instantiate<T>(T original, Transform parent) where T : Object =>
+            Instantiate(original);
+
+        public static T Instantiate<T>(T original, Vector3 position, Quaternion rotation) where T : Object =>
+            Instantiate(original);
+
+        // Scene queries have no scene to search headlessly.
+        public static T FindFirstObjectByType<T>() where T : Object => null;
+        public static T FindAnyObjectByType<T>() where T : Object => null;
+        public static T[] FindObjectsByType<T>(FindObjectsSortMode sortMode) where T : Object => new T[0];
+        public static T FindObjectOfType<T>() where T : Object => null;
+        public static T[] FindObjectsOfType<T>() where T : Object => new T[0];
 
         public static void Destroy(Object obj) => DestroyImmediate(obj);
 
@@ -268,7 +319,15 @@ namespace UnityEngine
         public void StopAllCoroutines() { }
 
         public void Invoke(string methodName, float time) { }
+        public void InvokeRepeating(string methodName, float time, float repeatRate) { }
         public void CancelInvoke() { }
+        public void CancelInvoke(string methodName) { }
+        public bool IsInvoking(string methodName) => false;
+    }
+
+    public struct Matrix4x4
+    {
+        public static Matrix4x4 identity => default;
     }
 
     public class Transform : Component, IEnumerable
@@ -277,6 +336,36 @@ namespace UnityEngine
 
         public Transform parent { get; private set; }
         public int childCount => children.Count;
+
+        public Vector3 forward { get => Vector3.forward; set { } }
+        public Vector3 up { get => Vector3.up; set { } }
+        public Vector3 right { get => Vector3.right; set { } }
+        public Matrix4x4 localToWorldMatrix => Matrix4x4.identity;
+        public Transform root => parent == null ? this : parent.root;
+
+        public void Rotate(Vector3 eulers) { }
+        public void Rotate(Vector3 eulers, Space relativeTo) { }
+        public void Rotate(Vector3 axis, float angle) { }
+        public void Rotate(Vector3 axis, float angle, Space relativeTo) { }
+        public void Rotate(float xAngle, float yAngle, float zAngle) { }
+        public void Translate(Vector3 translation) { }
+        public void Translate(Vector3 translation, Space relativeTo) { }
+        public void LookAt(Transform target) { }
+        public void LookAt(Vector3 worldPosition) { }
+        public void SetPositionAndRotation(Vector3 position, Quaternion rotation)
+        {
+            this.position = position;
+            this.rotation = rotation;
+        }
+        public Vector3 TransformDirection(Vector3 direction) => direction;
+        public Vector3 TransformPoint(Vector3 point) => point;
+        public Vector3 InverseTransformPoint(Vector3 point) => point;
+        public bool IsChildOf(Transform parent) => this.parent == parent;
+        public void SetAsFirstSibling() { }
+        public void SetAsLastSibling() { }
+        public void SetSiblingIndex(int index) { }
+        public int GetSiblingIndex() => 0;
+        public void DetachChildren() { }
 
         public Vector3 position { get; set; }
         public Vector3 localPosition { get; set; }
@@ -418,6 +507,10 @@ namespace UnityEngine
 
     public enum PrimitiveType { Sphere, Capsule, Cylinder, Cube, Plane, Quad }
 
+    public enum FindObjectsSortMode { None, InstanceID }
+
+    public enum Space { World, Self }
+
     // === Rendering placeholders ===
     //
     // No test asserts on rendering behaviour, so these store values and do nothing else.
@@ -443,10 +536,65 @@ namespace UnityEngine
         }
     }
 
-    public class Texture : Object { }
+    public class Texture : Object
+    {
+        public virtual int width { get; set; }
+        public virtual int height { get; set; }
+        public FilterMode filterMode { get; set; }
+        public TextureWrapMode wrapMode { get; set; }
+        public int anisoLevel { get; set; } = 1;
+    }
+
     public class Texture2D : Texture
     {
-        public Texture2D(int width, int height) { }
+        public Texture2D() { }
+        public Texture2D(int width, int height) { this.width = width; this.height = height; }
+        public Texture2D(int width, int height, TextureFormat format, bool mipChain)
+            : this(width, height) { }
+        public Texture2D(int width, int height, TextureFormat format, bool mipChain, bool linear)
+            : this(width, height) { }
+
+        public TextureFormat format => TextureFormat.RGBA32;
+        public int mipmapCount => 1;
+
+        public void Apply() { }
+        public void Apply(bool updateMipmaps) { }
+        public void Compress(bool highQuality) { }
+        public bool LoadImage(byte[] data) => false;
+        public Color[] GetPixels() => new Color[0];
+        public Color[] GetPixels(int x, int y, int blockWidth, int blockHeight) => new Color[0];
+        public void SetPixels(Color[] colors) { }
+        public void SetPixels(int x, int y, int blockWidth, int blockHeight, Color[] colors) { }
+        public void ReadPixels(Rect source, int destX, int destY) { }
+        public byte[] EncodeToPNG() => new byte[0];
+    }
+
+    public enum RenderTextureFormat { Default, ARGB32, Depth, RGB565 }
+
+    public class RenderTexture : Texture
+    {
+        public RenderTexture(int width, int height, int depth)
+        {
+            this.width = width;
+            this.height = height;
+        }
+
+        public RenderTexture(int width, int height, int depth, RenderTextureFormat format)
+            : this(width, height, depth) { }
+
+        public static RenderTexture active { get; set; }
+        public static RenderTexture GetTemporary(int width, int height, int depthBuffer = 0) =>
+            new RenderTexture(width, height, depthBuffer);
+        public static RenderTexture GetTemporary(int width, int height, int depthBuffer, RenderTextureFormat format) =>
+            new RenderTexture(width, height, depthBuffer, format);
+        public static void ReleaseTemporary(RenderTexture temp) { }
+        public void Release() { }
+    }
+
+    public static class Graphics
+    {
+        public static void Blit(Texture source, RenderTexture dest) { }
+        public static void Blit(Texture source, RenderTexture dest, Material mat) { }
     }
 
     public class Material : Object
@@ -485,6 +633,10 @@ namespace UnityEngine
     {
         private Material[] materialArray = new Material[0];
 
+        public Bounds bounds { get; set; }
+        public bool isVisible => false;
+        public int sortingOrder { get; set; }
+
         public Material material
         {
             get => materialArray.Length > 0 ? materialArray[0] : null;
@@ -502,7 +654,37 @@ namespace UnityEngine
     public class MeshRenderer : Renderer { }
     public class SkinnedMeshRenderer : Renderer { }
 
-    public class Mesh : Object { }
+    public struct CombineInstance
+    {
+        public Mesh mesh { get; set; }
+        public Matrix4x4 transform { get; set; }
+        public int subMeshIndex { get; set; }
+    }
+
+    public class Mesh : Object
+    {
+        public int vertexCount => 0;
+        public int subMeshCount { get; set; }
+        public bool isReadable => false;
+        public Vector3[] vertices { get; set; } = new Vector3[0];
+        public Vector3[] normals { get; set; } = new Vector3[0];
+        public Vector2[] uv { get; set; } = new Vector2[0];
+        public int[] triangles { get; set; } = new int[0];
+        public Bounds bounds { get; set; }
+
+        public void Clear() { }
+        public void RecalculateBounds() { }
+        public void RecalculateNormals() { }
+        public void RecalculateTangents() { }
+        public void OptimizeIndexBuffers() { }
+        public void OptimizeReorderVertexBuffer() { }
+        public void UploadMeshData(bool markNoLongerReadable) { }
+        public void CombineMeshes(CombineInstance[] combine) { }
+        public void CombineMeshes(CombineInstance[] combine, bool mergeSubMeshes) { }
+        public void CombineMeshes(CombineInstance[] combine, bool mergeSubMeshes, bool useMatrices) { }
+        public int[] GetTriangles(int submesh) => new int[0];
+        public void SetTriangles(int[] triangles, int submesh) { }
+    }
 
     public class MeshFilter : Component
     {
@@ -561,6 +743,19 @@ namespace UnityEngine
         /// walking up from the test binary until an Assets/ directory turns up, so tests that read
         /// shipped data files behave identically here and in the Unity Editor.
         /// </summary>
+        /// <summary>Scratch cache directory, mirroring Unity's per-app temporary cache.</summary>
+        public static string temporaryCachePath
+        {
+            get
+            {
+                string path = Path.Combine(Path.GetTempPath(), "MechanicScopeHeadlessTests", "cache");
+                Directory.CreateDirectory(path);
+                return path;
+            }
+        }
+
+        public static void OpenURL(string url) { }
+
         public static string dataPath
         {
             get
@@ -602,9 +797,11 @@ namespace UnityEngine
     public static class Time
     {
         public static float time => 0f;
+        public static float unscaledTime => 0f;
         public static float deltaTime => 0.016f;
         public static float unscaledDeltaTime => 0.016f;
         public static float realtimeSinceStartup => 0f;
+        public static float timeScale { get; set; } = 1f;
         public static int frameCount => 0;
     }
 
@@ -650,10 +847,28 @@ namespace UnityEngine
         public static void Save() { }
     }
 
+    public class AsyncOperation : YieldInstruction
+    {
+        public bool isDone => true;
+        public float progress => 1f;
+        public int priority { get; set; }
+        public bool allowSceneActivation { get; set; } = true;
+    }
+
+    public class ResourceRequest : AsyncOperation
+    {
+        public Object asset => null;
+    }
+
     public static class Resources
     {
         public static T Load<T>(string path) where T : Object => null;
         public static Object Load(string path) => null;
+        public static Object Load(string path, Type systemTypeInstance) => null;
+        public static ResourceRequest LoadAsync<T>(string path) where T : Object => new ResourceRequest();
+        public static ResourceRequest LoadAsync(string path) => new ResourceRequest();
+        public static ResourceRequest LoadAsync(string path, Type systemTypeInstance) => new ResourceRequest();
         public static void UnloadUnusedAssets() { }
+        public static void UnloadAsset(Object assetToUnload) { }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using MechanicScope.Data;
 using MechanicScope.Accessibility;
@@ -86,74 +87,99 @@ namespace MechanicScope.Core
             OnInitializationStarted?.Invoke();
 
             float startTime = Time.time;
-            float progress = 0f;
 
-            try
+            // C# forbids `yield return` inside a try block that has a catch clause, so the steps
+            // cannot simply be wrapped in try/catch. Each one is driven through RunStep(), which
+            // catches around MoveNext() and yields outside the try — the standard way to make a
+            // coroutine's failures recoverable.
+            var steps = new List<(InitializationState State, float Progress, IEnumerator Routine)>
             {
-                // Step 1: Check requirements
-                CurrentState = InitializationState.CheckingRequirements;
-                OnInitializationProgress?.Invoke(0.1f);
-                yield return CheckSystemRequirements();
-                progress = 0.15f;
+                (InitializationState.CheckingRequirements, 0.1f, CheckSystemRequirements()),
+                (InitializationState.InitializingData, 0.2f, InitializeDataLayer()),
+                (InitializationState.InitializingAR, 0.4f, InitializeARSystems()),
+                (InitializationState.InitializingAccessibility, 0.6f, InitializeAccessibility()),
+            };
 
-                // Step 2: Initialize data layer
-                CurrentState = InitializationState.InitializingData;
-                OnInitializationProgress?.Invoke(0.2f);
-                yield return InitializeDataLayer();
-                progress = 0.35f;
-
-                // Step 3: Initialize AR systems
-                CurrentState = InitializationState.InitializingAR;
-                OnInitializationProgress?.Invoke(0.4f);
-                yield return InitializeARSystems();
-                progress = 0.5f;
-
-                // Step 4: Initialize accessibility
-                CurrentState = InitializationState.InitializingAccessibility;
-                OnInitializationProgress?.Invoke(0.6f);
-                yield return InitializeAccessibility();
-                progress = 0.7f;
-
-                // Step 5: Initialize voice commands
-                if (enableVoiceCommands)
-                {
-                    CurrentState = InitializationState.InitializingVoice;
-                    OnInitializationProgress?.Invoke(0.8f);
-                    yield return InitializeVoiceCommands();
-                }
-                progress = 0.85f;
-
-                // Step 6: Load initial content
-                CurrentState = InitializationState.LoadingContent;
-                OnInitializationProgress?.Invoke(0.9f);
-                yield return LoadInitialContent();
-
-                // Ensure minimum splash time
-                if (showSplashScreen)
-                {
-                    float elapsed = Time.time - startTime;
-                    if (elapsed < minimumSplashTime)
-                    {
-                        yield return new WaitForSeconds(minimumSplashTime - elapsed);
-                    }
-                }
-
-                // Complete
-                CurrentState = InitializationState.Ready;
-                IsInitialized = true;
-                IsInitializing = false;
-                OnInitializationProgress?.Invoke(1f);
-                OnInitializationCompleted?.Invoke();
-
-                Debug.Log("[AppInitializer] Initialization completed successfully");
-            }
-            catch (Exception e)
+            if (enableVoiceCommands)
             {
-                CurrentState = InitializationState.Failed;
-                IsInitializing = false;
-                OnInitializationFailed?.Invoke(e.Message);
-                Debug.LogError($"[AppInitializer] Initialization failed: {e.Message}");
+                steps.Add((InitializationState.InitializingVoice, 0.8f, InitializeVoiceCommands()));
             }
+
+            steps.Add((InitializationState.LoadingContent, 0.9f, LoadInitialContent()));
+
+            foreach (var step in steps)
+            {
+                CurrentState = step.State;
+                OnInitializationProgress?.Invoke(step.Progress);
+
+                stepFailure = null;
+                yield return RunStep(step.Routine);
+
+                if (stepFailure != null)
+                {
+                    FailInitialization(stepFailure);
+                    yield break;
+                }
+            }
+
+            // Ensure minimum splash time
+            if (showSplashScreen)
+            {
+                float elapsed = Time.time - startTime;
+                if (elapsed < minimumSplashTime)
+                {
+                    yield return new WaitForSeconds(minimumSplashTime - elapsed);
+                }
+            }
+
+            // Complete
+            CurrentState = InitializationState.Ready;
+            IsInitialized = true;
+            IsInitializing = false;
+            OnInitializationProgress?.Invoke(1f);
+            OnInitializationCompleted?.Invoke();
+
+            Debug.Log("[AppInitializer] Initialization completed successfully");
+        }
+
+        /// <summary>
+        /// Set by <see cref="RunStep"/> when a step throws, so the caller can stop the sequence.
+        /// </summary>
+        private Exception stepFailure;
+
+        /// <summary>
+        /// Drives a step coroutine, capturing any exception it throws. The try block wraps only
+        /// MoveNext(); the yield happens outside it, which is what keeps this legal in an iterator.
+        /// </summary>
+        private IEnumerator RunStep(IEnumerator routine)
+        {
+            if (routine == null) yield break;
+
+            while (true)
+            {
+                object current;
+
+                try
+                {
+                    if (!routine.MoveNext()) yield break;
+                    current = routine.Current;
+                }
+                catch (Exception e)
+                {
+                    stepFailure = e;
+                    yield break;
+                }
+
+                yield return current;
+            }
+        }
+
+        private void FailInitialization(Exception e)
+        {
+            CurrentState = InitializationState.Failed;
+            IsInitializing = false;
+            OnInitializationFailed?.Invoke(e.Message);
+            Debug.LogError($"[AppInitializer] Initialization failed: {e.Message}");
         }
 
         private IEnumerator CheckSystemRequirements()

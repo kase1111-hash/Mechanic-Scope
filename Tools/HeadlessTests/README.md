@@ -11,13 +11,21 @@ Requires the .NET 8 SDK (`sudo apt-get install -y dotnet-sdk-8.0`).
 
 ## How it works
 
-The harness is a plain .NET 8 NUnit project that compiles **the real production sources** from
-`Assets/Scripts/Core` together with **the real tests** from `Assets/Tests/EditMode`, linking them
-against a minimal `UnityEngine` stand-in in `UnityShim/`.
+The harness is a plain .NET 8 NUnit project that compiles **every runtime source** under
+`Assets/Scripts` together with **the real tests** from `Assets/Tests/EditMode`, linking them against
+a minimal `UnityEngine` stand-in in `UnityShim/`.
 
 Nothing is duplicated. The tests and the code under test are the same files Unity compiles, so the
 harness cannot drift from the project — if a test is added or a source file changes, this runner
 picks it up automatically.
+
+It therefore does two jobs:
+
+1. **Compile gate.** All 33 runtime scripts must build. A compile error anywhere in
+   `Assets/Scripts` breaks the whole Unity project, and this catches it in seconds rather than on
+   someone's next Editor launch. (`Assets/Scripts/Editor` is excluded — it targets the `UnityEditor`
+   API and lives in its own assembly that never ships in a build.)
+2. **Test runner.** Executes the edit-mode suite.
 
 The project lives outside `Assets/`, so Unity never compiles it and it cannot affect a real build.
 
@@ -26,6 +34,10 @@ Tools/HeadlessTests/
 ├── MechanicScope.HeadlessTests.csproj   # lists the sources + tests to compile
 ├── UnityShim/
 │   ├── UnityEngineShim.cs               # GameObject, MonoBehaviour, Transform, Debug, ...
+│   ├── UnityEngineExtrasShim.cs         # Camera, Input, Texture2D, SceneManager, Networking, ...
+│   ├── UnityEngineUIShim.cs             # UnityEngine.UI + EventSystems
+│   ├── TMProShim.cs                     # TextMeshPro
+│   ├── ARFoundationShim.cs              # AR Foundation / AR Subsystems
 │   ├── JsonUtilityShim.cs               # JsonUtility with Unity's field-binding semantics
 │   └── GltfastShim.cs                   # glTFast placeholder (no model loading headlessly)
 └── README.md
@@ -57,6 +69,13 @@ Deliberately out of scope:
   the harness has no frame loop. No current test depends on a coroutine completing.
 - **AR, glTF model loading, and anything in `Assets/Scripts/UI`, `Voice`, `Performance`, or
   `Accessibility`** — none of which have edit-mode tests today.
+
+**One caveat on the compile gate.** The shim is hand-written, so a member whose signature differs
+from Unity's real one could in principle let something through that Unity would reject (or the
+reverse). It reliably catches the big classes of breakage — missing types, renamed members, wrong
+argument counts, illegal C# such as `yield` inside `try`/`catch` — but a green build here is strong
+evidence, not proof. When a shimmed signature is wrong, fix the shim to match Unity rather than
+loosening it.
 
 Unity remains the authority on Unity-specific behaviour:
 **Window > General > Test Runner > EditMode > Run All**.

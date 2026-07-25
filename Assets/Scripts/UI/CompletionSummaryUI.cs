@@ -347,7 +347,9 @@ namespace MechanicScope.UI
         {
             if (dataManager?.Progress == null || currentProcedure == null) return;
 
-            var entry = new RepairLogEntry
+            // Qualified: MechanicScope.Core and MechanicScope.Data both declare a RepairLogEntry,
+            // and both namespaces are imported here. This is the one ProgressRepository accepts.
+            var entry = new MechanicScope.Data.RepairLogEntry
             {
                 Id = Guid.NewGuid().ToString(),
                 ProcedureId = currentProcedure.id,

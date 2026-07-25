@@ -132,13 +132,18 @@ The suite runs headlessly — no Unity installation required. It needs the .NET 
 ./run_tests.sh
 ```
 
-This compiles the real sources in `Assets/Scripts/Core` and the real tests in
+This compiles **every runtime script** in `Assets/Scripts` and the real tests in
 `Assets/Tests/EditMode` against a minimal `UnityEngine` shim, then runs them. It exits non-zero if
 anything fails to compile or any test fails, so it is safe to use as a CI or pre-commit gate.
 
-Coverage includes procedure dependency resolution and step sequencing, JSON parsing, the part
-database, engine-ID path-traversal validation, and integrity of the bundled engine and procedure
-data (no dependency cycles, no dangling step references, every referenced part resolvable).
+Two things are verified:
+
+- **The project builds.** A compile error anywhere in `Assets/Scripts` breaks the entire Unity
+  project, since it is all one assembly. This catches that in seconds.
+- **The logic is correct.** Procedure dependency resolution and step sequencing, JSON parsing, the
+  part database, engine-ID path-traversal validation, and integrity of the bundled engine and
+  procedure data (no dependency cycles, no dangling step references, every referenced part
+  resolvable).
 
 Rendering, AR and coroutine timing are outside what the shim can verify — run those in the Editor
 via **Window > General > Test Runner**. See

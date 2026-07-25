@@ -152,14 +152,17 @@ Procedure file (`procedures/*.json`):
 |--------|--------|-------|
 | AR alignment & touch controls | Working | Production-quality gesture handling |
 | Procedure runner (dependency resolution) | Working | Full graph-based step sequencing |
-| SQLite database & repositories | Working | Migrations, transactions, full-text search |
 | Part highlighting shader | Working | URP Fresnel + outline + pulse animation |
 | Performance monitor | Working | FPS, memory, battery tracking |
 | Accessibility (haptics, text scaling) | Working | Native iOS/Android haptics |
-| 3D model loading | **Stub** | Creates placeholder cubes; glTFast integrated but no `.glb` bundled |
-| Voice commands | **Broken** | References non-existent platform recognizer classes |
+| SQLite database & repositories | **Opt-in** | Compiles, but no provider is bound. Disabled by default; app uses the JSON layer. See `Docs/SQLITE_SETUP.md` |
+| 3D model loading | Real, unexercised | Loads GLB via glTFast; no `.glb` is bundled, so nothing loads out of the box |
+| Voice commands | Partial | Command registration/dispatch works. `EditorVoiceRecognizer` only simulates input, and the iOS/Android recognizers `DllImport` a native speech plugin that is not in the repo, so no real recognition happens on any platform |
 | LOD manager (mesh simplification) | **Stub** | Returns input unchanged |
 | App initializer (AR systems) | **Stub** | Logs and yields null |
+
+The whole assembly is compile-checked on every `./run_tests.sh` run, so this table describes
+runtime completeness, not build health.
 
 ## Documentation
 
