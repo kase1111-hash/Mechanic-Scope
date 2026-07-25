@@ -1,24 +1,45 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.IO;
 using UnityEngine;
 
 namespace MechanicScope.Data
 {
     /// <summary>
-    /// Lightweight SQLite wrapper for Unity.
-    /// Uses Mono.Data.Sqlite which is included in Unity.
+    /// Lightweight SQLite wrapper.
+    ///
+    /// The wrapper is written against the ADO.NET base types in System.Data.Common, which are part
+    /// of .NET Standard, so this file always compiles. Only the creation of the concrete provider
+    /// connection is conditional — see <see cref="CreateConnection"/>.
+    ///
+    /// This layer is OPT-IN and disabled by default. The app's shipping data path is the JSON layer
+    /// (PartDatabase + ProgressTracker); this is the Phase 2 store kept for a future migration.
+    /// To enable it, see Docs/SQLITE_SETUP.md.
     /// </summary>
     public class SQLiteDatabase : IDisposable
     {
-        private Mono.Data.Sqlite.SqliteConnection connection;
+        private DbConnection connection;
         private bool isDisposed;
 
         public string DatabasePath { get; private set; }
-        public bool IsConnected => connection != null && connection.State == System.Data.ConnectionState.Open;
+        public bool IsConnected => connection != null && connection.State == ConnectionState.Open;
+
+        /// <summary>
+        /// True when this build actually has a SQLite provider compiled in. Callers that can fall
+        /// back to another store should check this instead of catching the constructor's exception.
+        /// </summary>
+        public static bool IsSupported =>
+#if MECHANICSCOPE_SQLITE
+            true;
+#else
+            false;
+#endif
 
         /// <summary>
         /// Opens or creates a SQLite database at the specified path.
+        /// Throws <see cref="NotSupportedException"/> when no provider is compiled in.
         /// </summary>
         public SQLiteDatabase(string databasePath)
         {
@@ -32,8 +53,31 @@ namespace MechanicScope.Data
             }
 
             string connectionString = $"URI=file:{databasePath}";
-            connection = new Mono.Data.Sqlite.SqliteConnection(connectionString);
+            connection = CreateConnection(connectionString);
             connection.Open();
+        }
+
+        /// <summary>
+        /// The single point where a concrete ADO.NET provider is bound.
+        ///
+        /// Mono.Data.Sqlite only exists under the legacy .NET Framework API compatibility level.
+        /// This project targets .NET Standard (ProjectSettings: apiCompatibilityLevel 6) with IL2CPP
+        /// on iOS/Android, where that type is not available — referencing it unconditionally fails
+        /// to compile and takes the entire MechanicScope assembly down with it.
+        ///
+        /// So the reference lives behind MECHANICSCOPE_SQLITE. Define that symbol only after adding
+        /// a provider that works on your target platforms (Docs/SQLITE_SETUP.md).
+        /// </summary>
+        private static DbConnection CreateConnection(string connectionString)
+        {
+#if MECHANICSCOPE_SQLITE
+            return new Mono.Data.Sqlite.SqliteConnection(connectionString);
+#else
+            throw new NotSupportedException(
+                "No SQLite provider is compiled into this build, so SQLiteDatabase cannot open a " +
+                "connection. The app's active data layer is the JSON store (PartDatabase / " +
+                "ProgressTracker); this Phase 2 layer is opt-in. See Docs/SQLITE_SETUP.md to enable it.");
+#endif
         }
 
         /// <summary>
@@ -130,7 +174,7 @@ namespace MechanicScope.Data
             return (long)ExecuteScalar("SELECT last_insert_rowid()");
         }
 
-        private void AddParameters(Mono.Data.Sqlite.SqliteCommand command, Dictionary<string, object> parameters)
+        private void AddParameters(DbCommand command, Dictionary<string, object> parameters)
         {
             if (parameters == null) return;
 
@@ -157,10 +201,8 @@ namespace MechanicScope.Data
             isDisposed = true;
         }
 
-        ~SQLiteDatabase()
-        {
-            Dispose();
-        }
+        // No finalizer: this type holds only a managed DbConnection, which has its own finalizer.
+        // Touching it from ours would risk using an already-finalized object.
     }
 
     /// <summary>
@@ -168,10 +210,10 @@ namespace MechanicScope.Data
     /// </summary>
     public class SQLiteTransaction : IDisposable
     {
-        private Mono.Data.Sqlite.SqliteTransaction transaction;
+        private DbTransaction transaction;
         private bool isCompleted;
 
-        internal SQLiteTransaction(Mono.Data.Sqlite.SqliteTransaction transaction)
+        internal SQLiteTransaction(DbTransaction transaction)
         {
             this.transaction = transaction;
         }

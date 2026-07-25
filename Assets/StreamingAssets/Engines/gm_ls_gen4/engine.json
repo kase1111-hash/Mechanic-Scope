@@ -45,6 +45,14 @@
         {
             "nodeNameInModel": "Tensioner_Pulley_Mesh",
             "partId": "belt_tensioner"
+        },
+        {
+            "nodeNameInModel": "Oil_Pan_Mesh",
+            "partId": "oil_pan"
+        },
+        {
+            "nodeNameInModel": "Valve_Cover_Mesh",
+            "partId": "valve_cover"
         }
     ],
     "defaultAlignment": {

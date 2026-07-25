@@ -104,42 +104,59 @@ namespace MechanicScope.Core
             // Create temp extraction directory
             string tempDir = Path.Combine(Application.temporaryCachePath, "import_" + Guid.NewGuid().ToString("N"));
 
-            try
+            // C# forbids `yield return` inside a try block with a catch clause, so the import cannot
+            // be wrapped in one big try/catch. Instead each synchronous chunk runs through
+            // TryImportStep(), which reports the failure and cleans up the temp directory; the
+            // frame yields happen between chunks, outside any try block. Behaviour is unchanged:
+            // any exception still aborts the import with a message and no leftover temp files.
+            string manifestPath = null;
+            EngineManifest manifest = null;
+            string sourceModelPath = null;
+            string destDir = null;
+            bool aborted = false;
+
+            // Extract zip
+            if (!TryImportStep(tempDir, () =>
             {
-                // Extract zip
                 Directory.CreateDirectory(tempDir);
                 ZipFile.ExtractToDirectory(zipPath, tempDir);
+            })) yield break;
 
-                Progress = 0.4f;
-                OnImportProgress?.Invoke(Progress);
-                yield return null;
+            Progress = 0.4f;
+            OnImportProgress?.Invoke(Progress);
+            yield return null;
 
-                // Find manifest
-                string manifestPath = FindFile(tempDir, "engine.json");
+            // Find and parse manifest
+            if (!TryImportStep(tempDir, () =>
+            {
+                manifestPath = FindFile(tempDir, "engine.json");
                 if (string.IsNullOrEmpty(manifestPath))
                 {
                     FailImport("Package missing engine.json manifest file.");
                     CleanupTempDir(tempDir);
-                    yield break;
+                    aborted = true;
+                    return;
                 }
 
-                // Parse manifest
                 string manifestJson = File.ReadAllText(manifestPath);
-                EngineManifest manifest = JsonUtility.FromJson<EngineManifest>(manifestJson);
+                manifest = JsonUtility.FromJson<EngineManifest>(manifestJson);
 
                 if (string.IsNullOrEmpty(manifest?.id))
                 {
                     FailImport("Invalid manifest: missing engine ID.");
                     CleanupTempDir(tempDir);
-                    yield break;
+                    aborted = true;
                 }
+            }) || aborted) yield break;
 
-                Progress = 0.5f;
-                OnImportProgress?.Invoke(Progress);
-                yield return null;
+            Progress = 0.5f;
+            OnImportProgress?.Invoke(Progress);
+            yield return null;
 
-                // Validate model file exists
-                string sourceModelPath = Path.Combine(Path.GetDirectoryName(manifestPath), manifest.modelFile);
+            // Validate model file exists
+            if (!TryImportStep(tempDir, () =>
+            {
+                sourceModelPath = Path.Combine(Path.GetDirectoryName(manifestPath), manifest.modelFile);
                 if (!File.Exists(sourceModelPath))
                 {
                     // Try finding model in temp directory
@@ -148,17 +165,21 @@ namespace MechanicScope.Core
                     {
                         FailImport("Package missing model file: " + manifest.modelFile);
                         CleanupTempDir(tempDir);
-                        yield break;
+                        aborted = true;
+                        return;
                     }
                     manifest.modelFile = Path.GetFileName(sourceModelPath);
                 }
+            }) || aborted) yield break;
 
-                Progress = 0.6f;
-                OnImportProgress?.Invoke(Progress);
-                yield return null;
+            Progress = 0.6f;
+            OnImportProgress?.Invoke(Progress);
+            yield return null;
 
-                // Create destination directory
-                string destDir = Path.Combine(enginesDirectory, manifest.id);
+            // Create destination directory
+            if (!TryImportStep(tempDir, () =>
+            {
+                destDir = Path.Combine(enginesDirectory, manifest.id);
                 if (Directory.Exists(destDir))
                 {
                     // Engine already exists - ask user or overwrite
@@ -166,34 +187,52 @@ namespace MechanicScope.Core
                 }
                 Directory.CreateDirectory(destDir);
                 Directory.CreateDirectory(Path.Combine(destDir, "procedures"));
+            })) yield break;
 
-                Progress = 0.7f;
-                OnImportProgress?.Invoke(Progress);
-                yield return null;
+            Progress = 0.7f;
+            OnImportProgress?.Invoke(Progress);
+            yield return null;
 
-                // Copy files
+            // Copy files
+            if (!TryImportStep(tempDir, () =>
+            {
                 CopyDirectory(Path.GetDirectoryName(manifestPath), destDir);
+            })) yield break;
 
-                Progress = 0.9f;
-                OnImportProgress?.Invoke(Progress);
-                yield return null;
+            Progress = 0.9f;
+            OnImportProgress?.Invoke(Progress);
+            yield return null;
 
-                // Update manifest with new path
+            // Update manifest with new path and clean up temp
+            if (!TryImportStep(tempDir, () =>
+            {
                 manifest.BasePath = destDir;
-
-                // Clean up temp
                 CleanupTempDir(tempDir);
+            })) yield break;
 
-                Progress = 1f;
-                OnImportProgress?.Invoke(Progress);
-                IsImporting = false;
+            Progress = 1f;
+            OnImportProgress?.Invoke(Progress);
+            IsImporting = false;
 
-                OnImportCompleted?.Invoke(manifest);
+            OnImportCompleted?.Invoke(manifest);
+        }
+
+        /// <summary>
+        /// Runs one synchronous chunk of an import. On failure the temp directory is removed and
+        /// the error reported, and the caller stops the coroutine. Returns false if the step threw.
+        /// </summary>
+        private bool TryImportStep(string tempDir, Action step)
+        {
+            try
+            {
+                step();
+                return true;
             }
             catch (Exception e)
             {
                 CleanupTempDir(tempDir);
                 FailImport("Import failed: " + e.Message);
+                return false;
             }
         }
 

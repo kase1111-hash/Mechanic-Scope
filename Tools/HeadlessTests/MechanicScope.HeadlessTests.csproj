@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Headless test harness.
+
+    Compiles the REAL gameplay sources from Assets/Scripts/Core together with the REAL edit-mode
+    tests from Assets/Tests/EditMode, against a minimal UnityEngine shim (UnityShim/). This lets
+    `dotnet test` actually execute the project's NUnit tests on a machine with no Unity install.
+
+    This project lives outside Assets/, so Unity never compiles it and it cannot affect a real build.
+
+    It is a fast correctness check of the engine-independent logic (dependency resolution, JSON
+    parsing, part lookup, path-traversal validation) — not a substitute for running the suite in
+    the Unity Editor, which is still the authority on Unity-specific behaviour.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>MechanicScope.HeadlessTests</AssemblyName>
+    <RootNamespace>MechanicScope.HeadlessTests</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- The shimmed Unity API intentionally leaves parameters unused; don't fail the build on it. -->
+    <NoWarn>$(NoWarn);CS0067;CS0414;CS0649;CS0162;CS8632</NoWarn>
+    <ProjectRoot>$(MSBuildThisFileDirectory)../../</ProjectRoot>
+  </PropertyGroup>
+
+  <ItemGroup Label="Unity API shim">
+    <Compile Include="UnityShim/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Label="Production sources under test">
+    <!--
+      Every runtime script, not just the ones with tests. Compiling the whole assembly here turns
+      "we hope it still builds" into a verified fact on every test run: a compile error anywhere in
+      Assets/Scripts breaks the entire Unity project, so it is worth catching in 10 seconds rather
+      than on someone's next Editor launch.
+
+      Assets/Scripts/Editor is excluded because it targets the UnityEditor API, which is a separate
+      assembly (MechanicScope.Editor.asmdef) that never ships in a build.
+    -->
+    <Compile Include="$(ProjectRoot)Assets/Scripts/**/*.cs"
+             Exclude="$(ProjectRoot)Assets/Scripts/Editor/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Label="The project's real edit-mode tests">
+    <Compile Include="$(ProjectRoot)Assets/Tests/EditMode/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
+</Project>

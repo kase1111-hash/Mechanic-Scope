@@ -1,169 +1,64 @@
 #!/bin/bash
-# MechanicScope Test Runner
-# Runs unit tests for the MechanicScope project
+# MechanicScope test runner.
+#
+# Compiles and RUNS the edit-mode test suite headlessly via the harness in Tools/HeadlessTests,
+# which builds the real sources in Assets/Scripts/Core and the real tests in Assets/Tests/EditMode
+# against a minimal UnityEngine shim. No Unity installation required.
+#
+# Exits non-zero if anything fails to compile or any test fails.
 
-set -e
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HARNESS_DIR="$PROJECT_ROOT/Tools/HeadlessTests"
 
 echo "=============================================="
-echo "MechanicScope End-to-End Test Runner"
+echo "MechanicScope Test Runner"
 echo "=============================================="
 echo ""
 
-# Run tests using the standalone C# test files
-run_standalone_tests() {
-    echo "Running standalone tests..."
-    echo "----------------------------------------------"
+if ! command -v dotnet > /dev/null 2>&1; then
+    cat <<'EOF'
+ERROR: the .NET SDK ('dotnet') was not found on PATH.
 
-    # Count test files
-    TEST_COUNT=$(find /home/user/Mechanic-Scope/Assets/Tests -name "*.cs" | wc -l)
-    echo "Found $TEST_COUNT test files"
-    echo ""
+The headless harness needs the .NET 8 SDK to compile and run the tests:
 
-    # List test categories
-    echo "Test Categories:"
-    echo "  - Core System Tests (ProcedureRunner, PartDatabase, EngineModel)"
-    echo "  - Data Layer Tests (ProgressTracker)"
-    echo "  - Voice System Tests (VoiceCommand)"
-    echo "  - Performance Tests (LOD, Memory, Caching)"
-    echo "  - Accessibility Tests (TextSize, HighContrast, TouchTargets)"
-    echo "  - Integration Tests (E2E workflows)"
-    echo ""
-}
+  Ubuntu/Debian:  sudo apt-get install -y dotnet-sdk-8.0
+  macOS:          brew install --cask dotnet-sdk
+  Other:          https://dotnet.microsoft.com/download/dotnet/8.0
 
-# Analyze test coverage
-analyze_tests() {
-    echo "----------------------------------------------"
-    echo "Test Analysis"
-    echo "----------------------------------------------"
+Alternatively, run the suite inside Unity:
+  Window > General > Test Runner > EditMode > Run All
+EOF
+    exit 1
+fi
 
-    TOTAL_TESTS=0
+echo "Test project: Tools/HeadlessTests"
+echo "Sources:      Assets/Scripts (all runtime scripts, compile-checked)"
+echo "Tests:        Assets/Tests/EditMode"
+echo ""
 
-    # Count [Test] and [UnityTest] attributes
-    while IFS= read -r file; do
-        COUNT=$(grep -c "\[Test\]" "$file" 2>/dev/null || true)
-        if [ -n "$COUNT" ] && [ "$COUNT" -gt 0 ]; then
-            TOTAL_TESTS=$((TOTAL_TESTS + COUNT))
-        fi
-        COUNT=$(grep -c "\[UnityTest\]" "$file" 2>/dev/null || true)
-        if [ -n "$COUNT" ] && [ "$COUNT" -gt 0 ]; then
-            TOTAL_TESTS=$((TOTAL_TESTS + COUNT))
-        fi
-    done < <(find /home/user/Mechanic-Scope/Assets/Tests -name "*.cs" 2>/dev/null)
+# --nologo keeps output readable; verbosity is raised only for the test results themselves.
+# '|| STATUS=$?' is required because 'set -e' would otherwise abort before the summary below.
+STATUS=0
+dotnet test "$HARNESS_DIR" --nologo --verbosity quiet "$@" || STATUS=$?
 
-    echo "Total test methods: $TOTAL_TESTS"
-    echo ""
-
-    # Breakdown by category
-    echo "Tests by category:"
-
-    count_tests_in_dir() {
-        local dir=$1
-        local count=0
-        if [ -d "$dir" ]; then
-            while IFS= read -r file; do
-                c=$(grep -c "\[Test\]\|\[UnityTest\]" "$file" 2>/dev/null || true)
-                if [ -n "$c" ] && [ "$c" -gt 0 ]; then
-                    count=$((count + c))
-                fi
-            done < <(find "$dir" -name "*.cs" 2>/dev/null)
-        fi
-        echo "$count"
-    }
-
-    echo "  Core:          $(count_tests_in_dir /home/user/Mechanic-Scope/Assets/Tests/Runtime/Core) tests"
-    echo "  Data:          $(count_tests_in_dir /home/user/Mechanic-Scope/Assets/Tests/Runtime/Data) tests"
-    echo "  Voice:         $(count_tests_in_dir /home/user/Mechanic-Scope/Assets/Tests/Runtime/Voice) tests"
-    echo "  Performance:   $(count_tests_in_dir /home/user/Mechanic-Scope/Assets/Tests/Runtime/Performance) tests"
-    echo "  Accessibility: $(count_tests_in_dir /home/user/Mechanic-Scope/Assets/Tests/Runtime/Accessibility) tests"
-    echo "  Integration:   $(count_tests_in_dir /home/user/Mechanic-Scope/Assets/Tests/Runtime/Integration) tests"
-
-    echo ""
-}
-
-# Validate test syntax
-validate_tests() {
-    echo "----------------------------------------------"
-    echo "Test Validation"
-    echo "----------------------------------------------"
-
-    WARNINGS=0
-
-    while IFS= read -r file; do
-        filename=$(basename "$file")
-
-        # Check for proper namespace
-        if ! grep -q "^namespace " "$file"; then
-            echo "Warning: Missing namespace in $filename"
-            WARNINGS=$((WARNINGS + 1))
-        fi
-
-        # Check for TestBase inheritance
-        if [[ "$filename" != "TestBase.cs" ]]; then
-            if ! grep -q "TestBase\|TestFixture" "$file"; then
-                echo "Warning: Missing TestBase in $filename"
-                WARNINGS=$((WARNINGS + 1))
-            fi
-        fi
-    done < <(find /home/user/Mechanic-Scope/Assets/Tests -name "*.cs" 2>/dev/null)
-
-    if [ $WARNINGS -eq 0 ]; then
-        echo "All test files validated successfully!"
-    else
-        echo "Validation complete with $WARNINGS warnings"
-    fi
-    echo ""
-}
-
-# Simulate test execution
-simulate_tests() {
-    echo "----------------------------------------------"
-    echo "Simulating Test Execution"
-    echo "----------------------------------------------"
-    echo ""
-
-    PASSED=0
-
-    # Count tests in each category
-    for category in Core Data Voice Performance Accessibility Integration; do
-        DIR="/home/user/Mechanic-Scope/Assets/Tests/Runtime/$category"
-        if [ -d "$DIR" ]; then
-            while IFS= read -r file; do
-                c=$(grep -c "\[Test\]\|\[UnityTest\]" "$file" 2>/dev/null || true)
-                if [ -n "$c" ] && [ "$c" -gt 0 ]; then
-                    PASSED=$((PASSED + c))
-                fi
-            done < <(find "$DIR" -name "*.cs" 2>/dev/null)
-            echo "  ✓ $category tests completed"
-        fi
-    done
-
-    echo ""
-    echo "----------------------------------------------"
-    echo "Test Results Summary"
-    echo "----------------------------------------------"
-    echo "  Passed:  $PASSED"
-    echo "  Failed:  0"
-    echo "  Skipped: 0"
-    echo "  Total:   $PASSED"
-    echo ""
-    echo "✓ All tests passed!"
-}
-
-# Main execution
-main() {
-    run_standalone_tests
-    analyze_tests
-    validate_tests
-    simulate_tests
-
-    echo ""
+echo ""
+if [ $STATUS -eq 0 ]; then
     echo "=============================================="
-    echo "Test run complete!"
+    echo "All tests passed."
     echo "=============================================="
-    echo ""
-    echo "Note: For full Unity Test Framework execution,"
-    echo "open the project in Unity Editor and use:"
-    echo "  Window > General > Test Runner"
-}
+else
+    echo "=============================================="
+    echo "TESTS FAILED (exit code $STATUS)"
+    echo "=============================================="
+fi
 
-main "$@"
+echo ""
+echo "Note: this run compile-checks every runtime script and executes the edit-mode"
+echo "tests (procedure sequencing, JSON parsing, part lookup, shipped-data validation)."
+echo "Behaviour that genuinely depends on Unity - rendering, AR, coroutine timing - must"
+echo "still be verified in the Editor:"
+echo "  Window > General > Test Runner"
+
+exit $STATUS

@@ -182,10 +182,23 @@ namespace MechanicScope.Tests
         [Test]
         public void SearchParts_ByName_FindsMatch()
         {
-            List<PartInfo> results = partDb.SearchParts("alternator");
+            // "serpentine" appears in one part's name and in no description.
+            List<PartInfo> results = partDb.SearchParts("serpentine");
 
             Assert.AreEqual(1, results.Count);
-            Assert.AreEqual("alternator_gm_ls", results[0].Id);
+            Assert.AreEqual("serpentine_belt_gm_ls", results[0].Id);
+        }
+
+        [Test]
+        public void SearchParts_MatchesNameAndDescription()
+        {
+            // Search spans both fields, so "alternator" matches the alternator by name and the
+            // serpentine belt by description ("Drives alternator, power steering, and AC compressor").
+            List<PartInfo> results = partDb.SearchParts("alternator");
+
+            Assert.AreEqual(2, results.Count);
+            Assert.IsTrue(results.Exists(p => p.Id == "alternator_gm_ls"));
+            Assert.IsTrue(results.Exists(p => p.Id == "serpentine_belt_gm_ls"));
         }
 
         [Test]
@@ -200,9 +213,11 @@ namespace MechanicScope.Tests
         [Test]
         public void SearchParts_CaseInsensitive()
         {
-            List<PartInfo> results = partDb.SearchParts("ALTERNATOR");
+            List<PartInfo> upper = partDb.SearchParts("ALTERNATOR");
+            List<PartInfo> lower = partDb.SearchParts("alternator");
 
-            Assert.AreEqual(1, results.Count);
+            Assert.AreEqual(lower.Count, upper.Count);
+            Assert.IsTrue(upper.Exists(p => p.Id == "alternator_gm_ls"));
         }
 
         [Test]

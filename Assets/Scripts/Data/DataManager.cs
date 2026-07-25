@@ -62,6 +62,17 @@ namespace MechanicScope.Data
         {
             if (IsInitialized) return;
 
+            // The SQLite layer is opt-in (see SQLiteDatabase.IsSupported). When it is not compiled
+            // in, this is an expected configuration rather than a failure: the app runs on the JSON
+            // layer, and consumers already treat a null Progress/Parts as "use the fallback store".
+            if (!SQLiteDatabase.IsSupported)
+            {
+                Debug.Log(
+                    "DataManager: SQLite layer is not enabled in this build; the JSON data layer " +
+                    "(PartDatabase / ProgressTracker) remains in use. See Docs/SQLITE_SETUP.md.");
+                return;
+            }
+
             try
             {
                 // Ensure database directory exists
@@ -95,6 +106,11 @@ namespace MechanicScope.Data
             catch (Exception e)
             {
                 Debug.LogError($"DataManager initialization failed: {e.Message}");
+
+                // Don't leave half-built repositories behind — a repository whose Initialize threw
+                // has no open database, and callers check these for null to pick a fallback.
+                Shutdown();
+
                 OnError?.Invoke(e.Message);
             }
         }
