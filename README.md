@@ -107,15 +107,42 @@ Mechanic-Scope/
 │   ├── Resources/             # DefaultPartsData.json (bundled part data)
 │   ├── StreamingAssets/
 │   │   └── Engines/           # Engine models + procedure JSON files
-│   └── Tests/                 # Runtime and editor tests
+│   └── Tests/
+│       └── EditMode/          # Edit mode tests + shipped-data validation
 ├── Docs/
 │   ├── ADDING_ENGINES.md      # Engine model import guide
 │   ├── PROCEDURE_FORMAT.md    # Procedure JSON specification
 │   └── UNITY_SETUP.md         # Development environment setup
+├── Tools/
+│   └── HeadlessTests/         # Runs the test suite without Unity (see its README)
 ├── Packages/
 │   └── manifest.json          # Unity package dependencies
+├── run_tests.sh               # Test entry point
 └── README.md
 ```
+
+---
+
+## Running the Tests
+
+The suite runs headlessly — no Unity installation required. It needs the .NET 8 SDK
+(`sudo apt-get install -y dotnet-sdk-8.0`, or see [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0)):
+
+```bash
+./run_tests.sh
+```
+
+This compiles the real sources in `Assets/Scripts/Core` and the real tests in
+`Assets/Tests/EditMode` against a minimal `UnityEngine` shim, then runs them. It exits non-zero if
+anything fails to compile or any test fails, so it is safe to use as a CI or pre-commit gate.
+
+Coverage includes procedure dependency resolution and step sequencing, JSON parsing, the part
+database, engine-ID path-traversal validation, and integrity of the bundled engine and procedure
+data (no dependency cycles, no dangling step references, every referenced part resolvable).
+
+Rendering, AR and coroutine timing are outside what the shim can verify — run those in the Editor
+via **Window > General > Test Runner**. See
+[`Tools/HeadlessTests/README.md`](Tools/HeadlessTests/README.md) for the full boundary.
 
 ---
 

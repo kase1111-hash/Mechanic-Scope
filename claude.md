@@ -26,11 +26,14 @@ Assets/
 │   └── Editor/         # Procedure editor window (Unity Editor tools)
 ├── Shaders/            # PartHighlight.shader for component highlighting
 ├── Tests/
-│   ├── Editor/         # Edit mode tests
-│   └── Runtime/        # Play mode tests (Core, Data, Voice, Integration, Performance)
+│   └── EditMode/       # Edit mode tests (ProcedureRunner, PartDatabase, EngineModelLoader,
+│                       # plus validation of the shipped engine/procedure data)
 ├── Resources/          # DefaultPartsData.json
 └── StreamingAssets/
     └── Engines/        # Engine models and procedures (e.g., gm_ls_gen4/)
+
+Tools/
+└── HeadlessTests/      # Runs Assets/Tests/EditMode via `dotnet test`, no Unity install needed
 ```
 
 ## Key Files
@@ -48,11 +51,17 @@ Assets/
 ## Commands
 
 ```bash
-# Run all tests
+# Run the edit-mode suite headlessly (needs the .NET 8 SDK, not Unity).
+# Compiles the real Core sources + real tests against a UnityEngine shim in Tools/HeadlessTests.
+# Exits non-zero if anything fails to compile or any test fails.
 ./run_tests.sh
 
-# In Unity: Window > General > Test Runner
+# In Unity (authoritative for rendering/AR/coroutine behaviour):
+#   Window > General > Test Runner > EditMode > Run All
 ```
+
+Tests live in `Assets/Tests/EditMode` and are picked up automatically by both runners.
+See `Tools/HeadlessTests/README.md` for what the shim does and does not cover.
 
 ## Coding Conventions
 

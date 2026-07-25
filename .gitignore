@@ -19,6 +19,7 @@
 .vs/
 .vscode/
 *.csproj
+!/Tools/HeadlessTests/*.csproj
 *.sln
 *.suo
 *.tmp
@@ -51,6 +52,11 @@ Thumbs.db
 
 # Crashlytics
 crashlytics-build.properties
+
+# Headless test harness build output (the .csproj itself is tracked, see above)
+/Tools/HeadlessTests/bin/
+/Tools/HeadlessTests/obj/
+/Tools/HeadlessTests/TestResults/
 
 # Plugins - tracked via Packages/manifest.json
 # GLB model files larger than 50MB should use Git LFS
