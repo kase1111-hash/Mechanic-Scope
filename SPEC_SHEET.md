@@ -488,7 +488,7 @@ public class UIState
 - Unity wrapper: Custom native plugin required (not yet built)
 - Wake word optional (can use always-listening or push-to-talk)
 
-> **Current status:** The `VoiceCommandManager` class and recognizer interfaces exist in `Assets/Scripts/Voice/`, but the platform-specific recognizer implementations (`IOSVoiceRecognizer`, `AndroidVoiceRecognizer`) reference classes that do not exist. Native plugins need to be created before this module is functional.
+> **Current status:** `VoiceCommandManager` and all three recognizers (`EditorVoiceRecognizer`, `IOSVoiceRecognizer`, `AndroidVoiceRecognizer`) exist in `Assets/Scripts/Voice/` and compile. The Editor recognizer only simulates input. The Android recognizer calls the platform `SpeechRecognizer` through JNI and has not been tested on a device. The iOS recognizer `DllImport`s a native Speech-framework plugin that has not been written, so voice does not work on iOS.
 
 ---
 
@@ -500,7 +500,7 @@ public class UIState
 Assets/StreamingAssets/Engines/
 └── [engine_id]/
     ├── engine.json              # Engine manifest (required)
-    ├── [model_file].glb         # 3D model (required, user-supplied)
+    ├── [model_file].glb         # 3D model (required; gm_ls_gen4 ships a generated stand-in)
     ├── thumbnail.png            # Preview image (optional)
     └── procedures/
         ├── oil_change.json
@@ -528,19 +528,18 @@ Application.persistentDataPath/
 
 ## 7. Implementation Status
 
-> The following table reflects the actual state of each component as of v0.3.0.
+> The following table reflects the current state of each component (unreleased, after v0.3.0). Nothing has been run in the Unity Editor or on a device yet; "Working" means the code is complete and its logic is tested headlessly.
 
 | Component | Specified In | Status | Notes |
 |-----------|-------------|--------|-------|
 | AR alignment & gestures | §2.1 | **Working** | Production-quality touch controls and state machine |
 | Procedure engine | §2.2 | **Working** | Full dependency resolution, step sequencing |
-| Part database (SQLite) | §2.3 | **Working** | Full-text search, migrations, transactions |
+| Part database | §2.3 | **Working** | JSON store is active. The SQLite layer (FTS search, migrations) is implemented but disabled by default; see `Docs/SQLITE_SETUP.md` |
 | Progress tracker | §2.4 | **Working** | Save/load progress, repair history, preferences |
-| 3D model loading | §2.1 | **Stub** | Creates placeholder cubes; glTFast integrated but no `.glb` bundled |
-| Voice commands | §5 | **Broken** | Manager exists but platform recognizers are missing |
+| 3D model loading | §2.1 | **Working** | glTFast GLB loading. Ships a generated stand-in `.glb`; a real model is still needed |
+| Voice commands | §5 | **Partial** | Manager works; Android recognizer untested; iOS needs a native plugin |
 | Part highlighting | §4.3 | **Working** | URP shader with Fresnel outline + pulse animation |
 | Performance monitor | §9 | **Working** | FPS, memory, battery tracking |
-| LOD manager | §9 | **Stub** | `SimplifyMesh()` is a no-op |
 | UI screens & navigation | §4 | **Working** | 8-mode state machine, all screens implemented |
 
 ---
