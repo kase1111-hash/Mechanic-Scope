@@ -35,14 +35,15 @@ namespace MechanicScope.Voice
         private bool isProcessingQueue;
 
         #if UNITY_IOS && !UNITY_EDITOR
+        // Implemented in Assets/Plugins/iOS/MechanicScopeSpeech.mm (AVSpeechSynthesizer).
         [System.Runtime.InteropServices.DllImport("__Internal")]
-        private static extern void _Speak(string text, float rate, float pitch, float volume, string language);
+        private static extern void _MSSpeak(string text, float rate, float pitch, float volume, string language);
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
-        private static extern void _StopSpeaking();
+        private static extern void _MSStopSpeaking();
 
         [System.Runtime.InteropServices.DllImport("__Internal")]
-        private static extern bool _IsSpeaking();
+        private static extern int _MSIsSpeaking();
         #endif
 
         #if UNITY_ANDROID && !UNITY_EDITOR
@@ -146,7 +147,7 @@ namespace MechanicScope.Voice
             isProcessingQueue = false;
 
             #if UNITY_IOS && !UNITY_EDITOR
-            _StopSpeaking();
+            _MSStopSpeaking();
             #elif UNITY_ANDROID && !UNITY_EDITOR
             if (tts != null && ttsInitialized)
             {
@@ -233,11 +234,11 @@ namespace MechanicScope.Voice
             bool success = false;
 
             #if UNITY_IOS && !UNITY_EDITOR
-            _Speak(text, speechRate, pitch, volume, language);
+            _MSSpeak(text, speechRate, pitch, volume, language);
             success = true;
 
             // Wait for speech to complete
-            while (_IsSpeaking())
+            while (_MSIsSpeaking() != 0)
             {
                 yield return null;
             }
@@ -256,9 +257,16 @@ namespace MechanicScope.Voice
 
                 if (success)
                 {
-                    // Estimate speech duration (rough approximation)
-                    float estimatedDuration = text.Length * 0.06f / speechRate;
-                    yield return new WaitForSeconds(estimatedDuration);
+                    // speak() only queues the text, so give the engine a moment to start, then
+                    // wait while it reports speaking. The cap stops a stuck engine from hanging
+                    // the queue; the estimate is generous (about 7 characters per second).
+                    float started = Time.realtimeSinceStartup;
+                    float cap = 2f + text.Length * 0.15f / speechRate;
+                    yield return new WaitForSeconds(0.2f);
+                    while (tts.Call<bool>("isSpeaking") && Time.realtimeSinceStartup - started < cap)
+                    {
+                        yield return null;
+                    }
                 }
 
                 parameters.Dispose();

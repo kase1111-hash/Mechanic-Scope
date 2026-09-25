@@ -82,7 +82,8 @@ Go to **Edit > Project Settings > XR Plug-in Management**:
 1. File > Build Settings > iOS > Switch Platform
 2. Player Settings > Other Settings:
    - Camera Usage Description: "Required for AR engine overlay"
-   - Microphone Usage Description: "Optional for voice commands"
+   - Microphone and speech recognition usage descriptions are added automatically at build time
+     (see `Docs/VOICE.md`)
    - Require ARKit support: checked
 3. Build > Open in Xcode > Run on device
 
@@ -95,7 +96,7 @@ Assets/
 │   ├── Core/                        # AR, procedures, parts, progress, model loading
 │   ├── Data/                        # SQLite, repositories, data manager
 │   ├── UI/                          # Screen controllers and UI components
-│   ├── Voice/                       # Voice commands (scaffolded, not yet functional)
+│   ├── Voice/                       # Voice commands (see Docs/VOICE.md)
 │   ├── Accessibility/               # Text scaling, haptics, screen reader support
 │   ├── Performance/                 # FPS monitoring, asset optimization, LOD (partial)
 │   ├── Utils/                       # Media loading

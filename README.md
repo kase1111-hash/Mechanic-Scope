@@ -32,7 +32,7 @@ Mechanic Scope overlays part identification and procedural guidance directly ont
 | **Procedure Mode** | Working | Select a task (e.g., "Replace alternator") and follow highlighted removal steps |
 | **Progress Tracking** | Working | Check off steps as you go; pick up where you left off |
 | **Offline Operation** | Working | All procedure data stored locally — no cell signal required |
-| **Voice Commands** | Planned | Hands-free control (say "next step" or "what is this part") — not yet functional |
+| **Voice Commands** | Untested on device | Hands-free control: tap MIC and say "next step", "what tools", "read warnings". On-device recognition. See [`Docs/VOICE.md`](Docs/VOICE.md) |
 
 > **Note:** The bundled engine models are crude **stand-ins** — blocky shapes whose nodes are named to match each `engine.json`, so the whole flow can be exercised. They are not real engines and must not be used to locate parts. Replace them with real models (see [Engine Models](#engine-models)). The app has not yet been run in Unity or on a device; see [Development Status](#development-status).
 
@@ -84,7 +84,7 @@ Mechanic Scope overlays part identification and procedural guidance directly ont
 | 3D Rendering | Unity URP 14.0.11 | Lightweight rendering for mobile |
 | 3D Model Loading | glTFast 6.6.0 | Runtime GLB/glTF import |
 | Procedure Data | JSON + SQLite | Portable, offline-capable storage |
-| Speech (planned) | On-device STT | Platform-native (not yet implemented) |
+| Speech | Speech framework (iOS), SpeechRecognizer (Android) | On-device voice commands and spoken replies |
 | Part Recognition | YOLOv8 (future) | Visual identification without model alignment |
 
 ---
@@ -98,7 +98,7 @@ Mechanic-Scope/
 │   │   ├── Core/              # AR alignment, procedure runner, part database, model loading
 │   │   ├── Data/              # SQLite wrapper, repositories (parts, progress)
 │   │   ├── UI/                # Screen controllers, popups, procedure cards
-│   │   ├── Voice/             # Voice command manager (planned, not yet functional)
+│   │   ├── Voice/             # Voice commands: manager, matcher, platform recognizers, TTS
 │   │   ├── Accessibility/     # Screen reader, haptics, text scaling
 │   │   ├── Performance/       # FPS monitoring, asset optimizer
 │   │   ├── Utils/             # Media loader utility
@@ -112,6 +112,7 @@ Mechanic-Scope/
 ├── Docs/
 │   ├── ADDING_ENGINES.md      # Engine model import guide
 │   ├── PROCEDURE_FORMAT.md    # Procedure JSON specification
+│   ├── VOICE.md               # Voice commands: modes, privacy, device test checklist
 │   └── UNITY_SETUP.md         # Development environment setup
 ├── Tools/
 │   ├── HeadlessTests/         # Runs the test suite without Unity (see its README)
@@ -251,8 +252,9 @@ in AR".
 - [ ] **Real engine models** — the bundled `.glb` files are stand-ins; see [Engine Models](#engine-models).
 - [ ] **Verify the Toyota 2GR-FE procedures** — its oil change and spark plug procedures are
       unverified drafts; check every torque value and capacity against a Toyota service manual.
-- [ ] **Voice commands** — command registration works; Android uses the platform `SpeechRecognizer`
-      via JNI (untested), and iOS needs a native Speech-framework plugin that has not been written.
+- [ ] **Voice commands on device** — implemented for iOS and Android (native plugins included) but
+      never run on a phone, and the iOS plugin has never been compiled. Work through the checklist in
+      [`Docs/VOICE.md`](Docs/VOICE.md).
 - [ ] **SQLite layer** — implemented but disabled by default (no provider bound); the app uses the
       JSON store. See [`Docs/SQLITE_SETUP.md`](Docs/SQLITE_SETUP.md).
 

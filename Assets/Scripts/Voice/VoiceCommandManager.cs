@@ -7,7 +7,14 @@ namespace MechanicScope.Voice
 {
     /// <summary>
     /// Manages voice command recognition and execution.
-    /// Supports both push-to-talk and wake word activation modes.
+    ///
+    /// Activation modes:
+    ///   PushToTalk      - each StartListening/ToggleListening hears one command, then stops.
+    ///   WakeWord        - listens continuously; commands only count for a few seconds after the wake word.
+    ///   AlwaysListening - listens continuously and acts on every recognized command.
+    ///
+    /// Results that arrive while the app is speaking (or just after) are dropped, so the
+    /// microphone hearing the app's own "Step completed" cannot trigger another command.
     /// </summary>
     public class VoiceCommandManager : MonoBehaviour
     {
@@ -22,6 +29,15 @@ namespace MechanicScope.Voice
         [SerializeField] private float wakeWordTimeout = 5f;
         [SerializeField] private float commandConfidenceThreshold = 0.6f;
 
+        [Header("Recognition")]
+        [Tooltip("BCP-47 language tag passed to the platform recognizer")]
+        [SerializeField] private string languageTag = "en-US";
+        [Tooltip("Off keeps audio on the device: iOS requires on-device recognition, Android prefers it. " +
+                 "On lets the platform send audio to its cloud service when on-device is unavailable.")]
+        [SerializeField] private bool allowCloudRecognition = false;
+        [Tooltip("Seconds after the app finishes speaking during which recognized speech is ignored")]
+        [SerializeField] private float echoGuardSeconds = 0.6f;
+
         [Header("Feedback")]
         [SerializeField] private bool enableVoiceFeedback = true;
         [SerializeField] private bool enableHapticFeedback = true;
@@ -32,10 +48,13 @@ namespace MechanicScope.Voice
         public event Action<string> OnCommandRecognized;
         public event Action<string> OnCommandExecuted;
         public event Action<string> OnRecognitionError;
+        /// <summary>What the recognizer is hearing, partial or final, for on-screen display.</summary>
+        public event Action<string> OnTranscript;
         public event Action OnWakeWordDetected;
 
         // Properties
         public bool IsEnabled => enableVoiceCommands;
+        public bool IsAvailable => voiceRecognizer != null && voiceRecognizer.IsAvailable;
         public bool IsListening { get; private set; }
         public bool IsWakeWordActive { get; private set; }
         public ActivationMode CurrentActivationMode => activationMode;
@@ -43,8 +62,10 @@ namespace MechanicScope.Voice
         // Components
         private IVoiceRecognizer voiceRecognizer;
         private VoiceFeedback voiceFeedback;
-        private Dictionary<string, VoiceCommand> commands = new Dictionary<string, VoiceCommand>();
+        private readonly VoiceCommandMatcher<VoiceCommand> matcher = new VoiceCommandMatcher<VoiceCommand>();
+        private readonly List<VoiceCommand> commands = new List<VoiceCommand>();
         private float wakeWordTimer;
+        private float echoGuardUntil;
 
         public enum ActivationMode
         {
@@ -55,17 +76,16 @@ namespace MechanicScope.Voice
 
         private void Awake()
         {
-            InitializeRecognizer();
-            RegisterDefaultCommands();
-        }
-
-        private void Start()
-        {
             voiceFeedback = GetComponent<VoiceFeedback>();
             if (voiceFeedback == null)
             {
                 voiceFeedback = gameObject.AddComponent<VoiceFeedback>();
             }
+            voiceFeedback.OnSpeakCompleted += StartEchoGuard;
+            voiceFeedback.OnSpeakError += StartEchoGuard;
+
+            InitializeRecognizer();
+            RegisterDefaultCommands();
         }
 
         private void Update()
@@ -84,26 +104,64 @@ namespace MechanicScope.Voice
         private void OnDestroy()
         {
             StopListening();
-            voiceRecognizer?.Dispose();
+            if (voiceFeedback != null)
+            {
+                voiceFeedback.OnSpeakCompleted -= StartEchoGuard;
+                voiceFeedback.OnSpeakError -= StartEchoGuard;
+            }
+            DetachRecognizer()?.Dispose();
         }
 
         private void InitializeRecognizer()
         {
             // Create platform-specific recognizer
             #if UNITY_IOS && !UNITY_EDITOR
-            voiceRecognizer = gameObject.AddComponent<IOSVoiceRecognizer>();
+            UseRecognizer(gameObject.AddComponent<IOSVoiceRecognizer>());
             #elif UNITY_ANDROID && !UNITY_EDITOR
-            voiceRecognizer = gameObject.AddComponent<AndroidVoiceRecognizer>();
+            UseRecognizer(gameObject.AddComponent<AndroidVoiceRecognizer>());
             #else
-            voiceRecognizer = gameObject.AddComponent<EditorVoiceRecognizer>();
+            UseRecognizer(gameObject.AddComponent<EditorVoiceRecognizer>());
             #endif
+        }
 
-            if (voiceRecognizer != null)
+        /// <summary>
+        /// Replaces the speech recognizer. The platform one is chosen automatically; this exists so
+        /// tests (and alternative engines) can supply their own.
+        /// </summary>
+        public void UseRecognizer(IVoiceRecognizer recognizer)
+        {
+            StopListening();
+            DetachRecognizer();
+
+            voiceRecognizer = recognizer;
+            if (voiceRecognizer == null) return;
+
+            voiceRecognizer.Configure(languageTag, allowCloudRecognition);
+            voiceRecognizer.OnResult += HandleRecognitionResult;
+            voiceRecognizer.OnError += HandleRecognitionError;
+            voiceRecognizer.OnPartialResult += HandlePartialResult;
+            voiceRecognizer.OnListeningEnded += HandleListeningEnded;
+        }
+
+        private IVoiceRecognizer DetachRecognizer()
+        {
+            IVoiceRecognizer old = voiceRecognizer;
+            if (old != null)
             {
-                voiceRecognizer.OnResult += HandleRecognitionResult;
-                voiceRecognizer.OnError += HandleRecognitionError;
-                voiceRecognizer.OnPartialResult += HandlePartialResult;
+                old.OnResult -= HandleRecognitionResult;
+                old.OnError -= HandleRecognitionError;
+                old.OnPartialResult -= HandlePartialResult;
+                old.OnListeningEnded -= HandleListeningEnded;
             }
+            voiceRecognizer = null;
+            return old;
+        }
+
+        /// <summary>Sets the systems commands act on. The scene wires these as serialized fields.</summary>
+        public void SetReferences(ProcedureRunner runner, ARAlignment alignment)
+        {
+            procedureRunner = runner;
+            arAlignment = alignment;
         }
 
         private void RegisterDefaultCommands()
@@ -187,7 +245,7 @@ namespace MechanicScope.Voice
             {
                 arAlignment?.UnlockAlignment();
                 Speak("Alignment unlocked, you can adjust the model");
-            }, "unlock alignment", "unlock model", "adjust");
+            }, "unlock alignment", "unlock model", "unlock", "adjust");
 
             RegisterCommand("Resets the model to default position", () =>
             {
@@ -208,10 +266,10 @@ namespace MechanicScope.Voice
                 Description = description
             };
 
+            commands.Add(command);
             foreach (string phrase in phrases)
             {
-                string normalized = NormalizePhrase(phrase);
-                commands[normalized] = command;
+                matcher.Add(phrase, command);
             }
         }
 
@@ -227,14 +285,28 @@ namespace MechanicScope.Voice
         {
             if (!enableVoiceCommands || IsListening) return;
 
-            if (voiceRecognizer == null)
+            if (!IsAvailable)
             {
                 OnRecognitionError?.Invoke("Voice recognition not available");
                 return;
             }
 
-            voiceRecognizer.StartListening();
+            // A deliberate tap means "listen to me now": cut off any reply still being read out,
+            // or the echo guard would discard what the user says next.
+            if (activationMode == ActivationMode.PushToTalk && voiceFeedback != null && voiceFeedback.IsSpeaking)
+            {
+                voiceFeedback.StopSpeaking();
+                echoGuardUntil = 0f;
+            }
+
+            // Set before starting: a recognizer may deliver results or end synchronously.
             IsListening = true;
+            voiceRecognizer.StartListening(activationMode != ActivationMode.PushToTalk);
+            if (!voiceRecognizer.IsListening)
+            {
+                IsListening = false;
+                return;
+            }
             OnListeningStarted?.Invoke();
 
             if (enableHapticFeedback)
@@ -276,6 +348,8 @@ namespace MechanicScope.Voice
         /// </summary>
         public void SetActivationMode(ActivationMode mode)
         {
+            // The recognizer's continuous/single-shot mode is fixed when it starts.
+            StopListening();
             activationMode = mode;
 
             if (mode == ActivationMode.AlwaysListening && enableVoiceCommands)
@@ -297,17 +371,45 @@ namespace MechanicScope.Voice
             }
         }
 
+        /// <summary>Enables or disables spoken replies.</summary>
+        public void SetVoiceFeedbackEnabled(bool enabled)
+        {
+            enableVoiceFeedback = enabled;
+        }
+
+        /// <summary>True while the app is speaking, or within echoGuardSeconds of finishing.</summary>
+        public bool IsHearingOwnVoice =>
+            (voiceFeedback != null && voiceFeedback.IsSpeaking) || Time.realtimeSinceStartup < echoGuardUntil;
+
+        private void StartEchoGuard(string unused)
+        {
+            echoGuardUntil = Time.realtimeSinceStartup + echoGuardSeconds;
+        }
+
         private void HandleRecognitionResult(string text, float confidence)
         {
-            if (string.IsNullOrEmpty(text)) return;
+            if (!IsListening || string.IsNullOrEmpty(text)) return;
 
-            string normalized = NormalizePhrase(text);
+            if (IsHearingOwnVoice)
+            {
+                Debug.Log($"[Voice] Ignored while speaking: \"{text}\"");
+                return;
+            }
+
             Debug.Log($"Voice recognized: \"{text}\" (confidence: {confidence:F2})");
+            OnTranscript?.Invoke(text);
+
+            // Push-to-talk hears one command per press.
+            if (activationMode == ActivationMode.PushToTalk)
+            {
+                StopListening();
+            }
 
             // Check for wake word
             if (activationMode == ActivationMode.WakeWord && !IsWakeWordActive)
             {
-                if (normalized.Contains(NormalizePhrase(wakeWord)))
+                string padded = " " + VoiceCommandMatcher<VoiceCommand>.Normalize(text) + " ";
+                if (padded.Contains(" " + VoiceCommandMatcher<VoiceCommand>.Normalize(wakeWord) + " "))
                 {
                     ActivateWakeWord();
                     return;
@@ -326,21 +428,7 @@ namespace MechanicScope.Voice
                 return;
             }
 
-            // Try to match command
-            VoiceCommand matchedCommand = null;
-            string matchedPhrase = "";
-
-            foreach (var kvp in commands)
-            {
-                if (normalized.Contains(kvp.Key))
-                {
-                    if (matchedPhrase.Length < kvp.Key.Length)
-                    {
-                        matchedCommand = kvp.Value;
-                        matchedPhrase = kvp.Key;
-                    }
-                }
-            }
+            VoiceCommand matchedCommand = matcher.Match(text, out string matchedPhrase);
 
             if (matchedCommand != null)
             {
@@ -353,22 +441,48 @@ namespace MechanicScope.Voice
                     wakeWordTimer = wakeWordTimeout;
                 }
             }
-            else
+            else if (activationMode != ActivationMode.AlwaysListening)
             {
+                // In always-listening mode most speech is conversation, not commands: stay quiet.
                 Speak("Sorry, I didn't understand that");
             }
         }
 
         private void HandlePartialResult(string text)
         {
-            // Could update UI with partial recognition
-            Debug.Log($"Partial: {text}");
+            if (IsListening && !IsHearingOwnVoice)
+            {
+                OnTranscript?.Invoke(text);
+            }
         }
 
-        private void HandleRecognitionError(string error)
+        private void HandleRecognitionError(VoiceErrorKind kind, string error)
         {
-            Debug.LogWarning($"Voice recognition error: {error}");
+            Debug.LogWarning($"Voice recognition error ({kind}): {error}");
             OnRecognitionError?.Invoke(error);
+
+            switch (kind)
+            {
+                case VoiceErrorKind.NoSpeech:
+                    if (activationMode == ActivationMode.PushToTalk) Speak("Sorry, I didn't catch that");
+                    break;
+                case VoiceErrorKind.PermissionDenied:
+                    Speak("Microphone permission is needed for voice commands");
+                    break;
+                case VoiceErrorKind.Unavailable:
+                    Speak("Voice commands are not available on this device");
+                    break;
+            }
+        }
+
+        /// <summary>The recognizer stopped on its own (end of utterance, error, permission denied).</summary>
+        private void HandleListeningEnded()
+        {
+            if (!IsListening) return;
+
+            IsListening = false;
+            IsWakeWordActive = false;
+            OnListeningStopped?.Invoke();
         }
 
         private void ExecuteCommand(VoiceCommand command, string phrase)
@@ -410,11 +524,6 @@ namespace MechanicScope.Voice
         {
             IsWakeWordActive = false;
             Speak("Goodbye");
-        }
-
-        private string NormalizePhrase(string phrase)
-        {
-            return phrase.ToLower().Trim();
         }
 
         private void Speak(string message)
@@ -481,18 +590,10 @@ namespace MechanicScope.Voice
         public List<(string phrase, string description)> GetRegisteredCommands()
         {
             var result = new List<(string, string)>();
-            var seen = new HashSet<VoiceCommand>();
-
-            foreach (var kvp in commands)
+            foreach (VoiceCommand command in commands)
             {
-                if (!seen.Contains(kvp.Value))
-                {
-                    seen.Add(kvp.Value);
-                    string phrases = string.Join(" / ", kvp.Value.Phrases);
-                    result.Add((phrases, kvp.Value.Description));
-                }
+                result.Add((string.Join(" / ", command.Phrases), command.Description));
             }
-
             return result;
         }
     }
@@ -512,14 +613,25 @@ namespace MechanicScope.Voice
     /// </summary>
     public interface IVoiceRecognizer : IDisposable
     {
+        /// <summary>A final transcript and its confidence (0..1).</summary>
         event Action<string, float> OnResult;
         event Action<string> OnPartialResult;
-        event Action<string> OnError;
+        event Action<VoiceErrorKind, string> OnError;
+
+        /// <summary>Raised when the recognizer stops on its own; not raised by StopListening.</summary>
+        event Action OnListeningEnded;
 
         bool IsAvailable { get; }
         bool IsListening { get; }
 
-        void StartListening();
+        void Configure(string languageTag, bool allowCloudRecognition);
+
+        /// <summary>
+        /// Starts recognition. With <paramref name="continuous"/> false the recognizer delivers one
+        /// utterance and then ends (raising OnListeningEnded); with true it keeps going until stopped.
+        /// </summary>
+        void StartListening(bool continuous);
+
         void StopListening();
     }
 }
