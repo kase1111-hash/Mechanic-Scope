@@ -1,0 +1,71 @@
+{
+    "id": "toyota_2gr_fe",
+    "name": "Toyota 2GR-FE 3.5L V6",
+    "manufacturer": "Toyota",
+    "years": "2005-2019 (transverse: Camry, Avalon, Highlander, Sienna, RAV4)",
+    "modelFile": "toyota_2gr_fe.glb",
+    "thumbnail": "thumbnail.png",
+    "partMappings": [
+        {
+            "nodeNameInModel": "Engine_Cover",
+            "partId": "engine_cover_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Intake_Plenum",
+            "partId": "intake_plenum_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Ignition_Coils_Front",
+            "partId": "ignition_coils_front_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Ignition_Coils_Rear",
+            "partId": "ignition_coils_rear_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Spark_Plugs_Front",
+            "partId": "spark_plugs_front_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Spark_Plugs_Rear",
+            "partId": "spark_plugs_rear_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Oil_Filler_Cap",
+            "partId": "oil_filler_cap_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Oil_Pan",
+            "partId": "oil_pan_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Oil_Filter_Housing",
+            "partId": "oil_filter_housing_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Engine_Under_Cover",
+            "partId": "engine_under_cover_toyota_2gr"
+        },
+        {
+            "nodeNameInModel": "Battery_Negative_Terminal",
+            "partId": "battery_negative"
+        }
+    ],
+    "defaultAlignment": {
+        "position": [
+            0,
+            0,
+            0.5
+        ],
+        "rotation": [
+            0,
+            180,
+            0
+        ],
+        "scale": [
+            1,
+            1,
+            1
+        ]
+    }
+}

@@ -500,7 +500,7 @@ public class UIState
 Assets/StreamingAssets/Engines/
 └── [engine_id]/
     ├── engine.json              # Engine manifest (required)
-    ├── [model_file].glb         # 3D model (required; gm_ls_gen4 ships a generated stand-in)
+    ├── [model_file].glb         # 3D model (required; bundled engines ship generated stand-ins)
     ├── thumbnail.png            # Preview image (optional)
     └── procedures/
         ├── oil_change.json

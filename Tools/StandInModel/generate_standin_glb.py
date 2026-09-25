@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
-"""Generate a stand-in GLB for the GM LS Gen IV engine.
+"""Generate stand-in GLBs for the bundled engines.
 
-The real engine model is not shipped (licensing - see README "Engine Models"). Without *some*
+Real engine models are not shipped (licensing - see README "Engine Models"). Without *some*
 model, engine.json points at a file that does not exist and nothing downstream of model loading
-(alignment, part tapping, highlighting) can be exercised. This script writes a deliberately crude,
-blocky V8 whose nodes are named exactly after the `nodeNameInModel` entries in engine.json, so
-the full vertical slice runs end to end until a real model replaces it.
+(alignment, part tapping, highlighting) can be exercised. This script writes deliberately crude,
+blocky engines whose nodes are named exactly after the `nodeNameInModel` entries in each
+engine.json, so the full vertical slice runs end to end until real models replace them.
 
 Positions are approximate and for layout only - do not use this model to locate real parts.
 
 Pure standard library (no numpy / Blender), so it runs anywhere Python 3.8+ does:
 
-    python3 Tools/StandInModel/generate_standin_glb.py
+    python3 Tools/StandInModel/generate_standin_glb.py              # every engine in STANDIN_ENGINES
+    python3 Tools/StandInModel/generate_standin_glb.py toyota_2gr_fe  # just one
 
-Output: Assets/StreamingAssets/Engines/gm_ls_gen4/gm_ls_gen4.glb
+Output: Assets/StreamingAssets/Engines/<engine_id>/<modelFile from engine.json>
 
-Coordinate system is glTF's: metres, +Y up, +Z toward the front of the engine (the accessory
-drive), +X toward the passenger side. glTFast converts to Unity's left-handed space on import.
+When a real model replaces a stand-in, delete that engine from STANDIN_ENGINES so this script (and
+the CI job that runs it) stops overwriting the real model.
+
+Coordinate system is glTF's: metres, +Y up. glTFast converts to Unity's left-handed space on
+import. Each layout below says which way its engine faces.
 """
 
 import json
@@ -26,8 +30,7 @@ import struct
 import sys
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-ENGINE_DIR = os.path.join(REPO_ROOT, "Assets", "StreamingAssets", "Engines", "gm_ls_gen4")
-OUTPUT_PATH = os.path.join(ENGINE_DIR, "gm_ls_gen4.glb")
+ENGINES_DIR = os.path.join(REPO_ROOT, "Assets", "StreamingAssets", "Engines")
 
 
 # --- Geometry primitives -------------------------------------------------------------------
@@ -103,8 +106,9 @@ def merge(*parts):
     return positions, normals, indices
 
 
-# --- Engine layout -------------------------------------------------------------------------
-# (node name, colour RGB, geometry). Names marked "mapped" must match engine.json exactly.
+# --- Engine layouts ------------------------------------------------------------------------
+# Each is a list of (node name, colour RGB, geometry). Names under "Mapped parts" must match
+# engine.json exactly; the generator refuses to run otherwise.
 
 GREY = (0.35, 0.36, 0.38)
 DARK = (0.12, 0.12, 0.13)
@@ -112,7 +116,9 @@ ALU = (0.70, 0.71, 0.73)
 BLACK_PLASTIC = (0.08, 0.08, 0.09)
 RUBBER = (0.05, 0.05, 0.05)
 
-PARTS = [
+# GM LS Gen IV (longitudinal V8): +Z toward the front of the engine (the accessory drive),
+# +X toward the passenger side.
+GM_LS_GEN4_PARTS = [
     # Unmapped context geometry: block and heads give the parts something to sit on.
     ("Engine_Block", GREY, box((0, 0.20, -0.05), (0.46, 0.34, 0.62))),
     ("Cylinder_Head_Left", GREY, box((-0.24, 0.40, -0.05), (0.16, 0.14, 0.58))),
@@ -144,13 +150,57 @@ PARTS = [
 ]
 
 
+def _row(y, z, radius, length, xs):
+    """One cylinder per x position, all along the Y axis: a bank of coils or plugs."""
+    return merge(*[cylinder((x, y, z), radius, length, "y") for x in xs])
+
+
+COIL_XS = (-0.15, -0.03, 0.09)   # three cylinders per bank
+
+# Toyota 2GR-FE (transverse V6, as installed in a Camry, Highlander, Sienna or RAV4): the
+# crankshaft runs along X with the accessory/timing end at +X, +Z is the front (radiator-side)
+# bank and -Z the rear (firewall-side) bank. The intake plenum sits over the rear bank, which is
+# why reaching the rear spark plugs means removing it.
+TOYOTA_2GR_FE_PARTS = [
+    # Unmapped context geometry.
+    ("Engine_Block", GREY, box((0, 0.20, 0), (0.50, 0.30, 0.40))),
+    ("Cylinder_Head_Front", ALU, box((0, 0.40, 0.19), (0.46, 0.12, 0.16))),
+    ("Cylinder_Head_Rear", ALU, box((0, 0.40, -0.19), (0.46, 0.12, 0.16))),
+    ("Valve_Cover_Front", BLACK_PLASTIC, box((0, 0.49, 0.19), (0.44, 0.06, 0.14))),
+    ("Valve_Cover_Rear", BLACK_PLASTIC, box((0, 0.49, -0.19), (0.44, 0.06, 0.14))),
+    ("Timing_Cover", GREY, box((0.27, 0.30, 0), (0.04, 0.36, 0.44))),
+    ("Throttle_Body", ALU, cylinder((-0.26, 0.62, -0.08), 0.04, 0.06, "x")),
+    ("Battery", DARK, box((-0.55, 0.35, 0.10), (0.18, 0.18, 0.26))),
+
+    # Mapped parts.
+    ("Engine_Cover", (0.25, 0.25, 0.27), box((0, 0.72, -0.02), (0.40, 0.04, 0.30))),
+    ("Intake_Plenum", (0.55, 0.56, 0.58), box((0, 0.62, -0.08), (0.44, 0.12, 0.24))),
+    ("Ignition_Coils_Front", DARK, _row(0.51, 0.19, 0.018, 0.08, COIL_XS)),
+    ("Ignition_Coils_Rear", DARK, _row(0.51, -0.19, 0.018, 0.08, COIL_XS)),
+    ("Spark_Plugs_Front", (0.85, 0.85, 0.80), _row(0.44, 0.19, 0.009, 0.06, COIL_XS)),
+    ("Spark_Plugs_Rear", (0.85, 0.85, 0.80), _row(0.44, -0.19, 0.009, 0.06, COIL_XS)),
+    ("Oil_Filler_Cap", (0.90, 0.75, 0.10), cylinder((0.18, 0.535, 0.19), 0.025, 0.03, "y")),
+    ("Oil_Pan", DARK, box((0, 0.00, 0), (0.44, 0.10, 0.34))),
+    ("Oil_Filter_Housing", (0.15, 0.15, 0.16), cylinder((0.18, 0.06, 0.23), 0.045, 0.10, "y")),
+    ("Engine_Under_Cover", BLACK_PLASTIC, box((0, -0.10, 0.05), (0.70, 0.01, 0.60))),
+    ("Battery_Negative_Terminal", (0.10, 0.10, 0.10),
+     cylinder((-0.58, 0.455, 0.02), 0.012, 0.03, "y")),
+]
+
+# engine id -> (root node name, layout). The id is the folder under StreamingAssets/Engines.
+STANDIN_ENGINES = {
+    "gm_ls_gen4": ("GM_LS_Gen4_StandIn", GM_LS_GEN4_PARTS),
+    "toyota_2gr_fe": ("Toyota_2GR_FE_StandIn", TOYOTA_2GR_FE_PARTS),
+}
+
+
 # --- GLB writer ----------------------------------------------------------------------------
 
 def pad4(data, fill):
     return data + fill * ((4 - len(data) % 4) % 4)
 
 
-def build_gltf(parts):
+def build_gltf(parts, root_name):
     blob = bytearray()
     buffer_views, accessors, meshes, materials, nodes = [], [], [], [], []
 
@@ -191,7 +241,7 @@ def build_gltf(parts):
             "material": len(materials) - 1}]})
         nodes.append({"name": name, "mesh": len(meshes) - 1})
 
-    root = {"name": "GM_LS_Gen4_StandIn", "children": list(range(1, len(nodes) + 1))}
+    root = {"name": root_name, "children": list(range(1, len(nodes) + 1))}
     gltf = {
         "asset": {"version": "2.0",
                   "generator": "Mechanic-Scope Tools/StandInModel/generate_standin_glb.py"},
@@ -221,24 +271,39 @@ def write_glb(gltf, blob, path):
         f.write(blob)
 
 
-def check_against_manifest():
+def load_manifest(engine_id):
+    with open(os.path.join(ENGINES_DIR, engine_id, "engine.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def check_against_manifest(engine_id, manifest, parts):
     """Fail loudly if engine.json maps a node this model does not provide."""
-    with open(os.path.join(ENGINE_DIR, "engine.json"), encoding="utf-8") as f:
-        manifest = json.load(f)
-    names = {name for name, _, _ in PARTS}
+    names = {name for name, _, _ in parts}
     missing = [m["nodeNameInModel"] for m in manifest["partMappings"]
                if m["nodeNameInModel"] not in names]
     if missing:
-        sys.exit(f"engine.json maps nodes the stand-in does not define: {', '.join(missing)}")
+        sys.exit(f"{engine_id}/engine.json maps nodes the stand-in does not define: "
+                 f"{', '.join(missing)}")
 
 
-def main():
-    check_against_manifest()
-    gltf, blob = build_gltf(PARTS)
-    write_glb(gltf, blob, OUTPUT_PATH)
-    print(f"Wrote {os.path.relpath(OUTPUT_PATH, REPO_ROOT)} "
-          f"({os.path.getsize(OUTPUT_PATH)} bytes, {len(PARTS)} parts)")
+def main(argv):
+    engine_ids = argv or list(STANDIN_ENGINES)
+    unknown = [e for e in engine_ids if e not in STANDIN_ENGINES]
+    if unknown:
+        sys.exit(f"No stand-in layout for: {', '.join(unknown)} "
+                 f"(known: {', '.join(STANDIN_ENGINES)})")
+
+    for engine_id in engine_ids:
+        root_name, parts = STANDIN_ENGINES[engine_id]
+        manifest = load_manifest(engine_id)
+        check_against_manifest(engine_id, manifest, parts)
+
+        gltf, blob = build_gltf(parts, root_name)
+        output_path = os.path.join(ENGINES_DIR, engine_id, manifest["modelFile"])
+        write_glb(gltf, blob, output_path)
+        print(f"Wrote {os.path.relpath(output_path, REPO_ROOT)} "
+              f"({os.path.getsize(output_path)} bytes, {len(parts)} parts)")
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

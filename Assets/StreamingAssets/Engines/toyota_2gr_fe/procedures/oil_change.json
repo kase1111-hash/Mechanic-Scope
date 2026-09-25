@@ -1,0 +1,153 @@
+{
+    "id": "oil_change",
+    "name": "Oil and Filter Change",
+    "description": "Change engine oil and replace the cartridge oil filter on Toyota 2GR-FE 3.5L V6 engines (transverse applications). UNVERIFIED DRAFT: torque values and capacities have not been checked against a Toyota service manual - confirm them for your vehicle before relying on them.",
+    "engineId": "toyota_2gr_fe",
+    "estimatedTime": "30-45 minutes",
+    "difficulty": "beginner",
+    "tools": [
+        "14mm socket",
+        "64mm oil filter cap wrench",
+        "Torque wrench",
+        "Drain pan",
+        "Funnel",
+        "Jack and jack stands, or ramps",
+        "Rags or shop towels"
+    ],
+    "steps": [
+        {
+            "id": 1,
+            "action": "Remove the oil filler cap",
+            "details": "Unscrew the oil filler cap on top of the front valve cover. Removing it lets air in so the oil drains faster.",
+            "partId": "oil_filler_cap_toyota_2gr",
+            "tools": [],
+            "warnings": ["Keep dirt out of the open filler neck"],
+            "requires": [],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 2,
+            "action": "Raise the vehicle and open the engine under cover",
+            "details": "Raise the front of the vehicle and support it on jack stands or ramps. Remove the engine under cover, or open its oil filter access panel if your vehicle has one, to reach the drain plug and filter housing.",
+            "partId": "engine_under_cover_toyota_2gr",
+            "tools": ["Jack and jack stands, or ramps"],
+            "warnings": ["Never work under a vehicle supported only by a jack", "Chock the rear wheels"],
+            "requires": [],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 3,
+            "action": "Drain the oil pan",
+            "details": "Position the drain pan under the oil pan drain plug. Remove the plug with a 14mm socket and let the oil drain completely.",
+            "partId": "oil_pan_toyota_2gr",
+            "tools": ["14mm socket", "Drain pan"],
+            "warnings": ["Oil may be hot - let the engine cool first", "Don't drop the drain plug into the pan"],
+            "requires": [2],
+            "torqueSpec": {
+                "value": 30,
+                "unit": "ft-lbs",
+                "note": "On reinstall (40 N-m). Unverified - confirm in service manual"
+            },
+            "media": null
+        },
+        {
+            "id": 4,
+            "action": "Drain the oil filter housing",
+            "details": "The filter is a paper cartridge inside a housing at the front bottom of the engine. Remove the small drain plug on the bottom of the housing cap, then push in the plastic drain pipe supplied with the new filter so the housing drains into your pan without spilling.",
+            "partId": "oil_filter_housing_toyota_2gr",
+            "tools": ["Drain pan", "Rags or shop towels"],
+            "warnings": ["Skipping this step dumps oil over the subframe when the cap comes off"],
+            "requires": [2],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 5,
+            "action": "Remove the housing cap and old filter element",
+            "details": "Once the housing has drained, remove the drain pipe. Unscrew the housing cap with a 64mm cap wrench and pull out the old filter element. Remove the old O-ring from the cap.",
+            "partId": "oil_filter_housing_toyota_2gr",
+            "tools": ["64mm oil filter cap wrench", "Rags or shop towels"],
+            "warnings": ["The cap is plastic - use a cap wrench, not pliers"],
+            "requires": [4],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 6,
+            "action": "Install the new element and O-ring, then refit the cap",
+            "details": "Fit the new O-ring from the filter kit to the cap and wipe it with fresh oil. Push the new element into the cap, thread the cap on by hand, then torque it to spec.",
+            "partId": "oil_filter_housing_toyota_2gr",
+            "tools": ["64mm oil filter cap wrench", "Torque wrench"],
+            "warnings": ["A missing or pinched O-ring causes a fast oil leak", "Do not over-tighten the plastic cap"],
+            "requires": [5],
+            "torqueSpec": {
+                "value": 18,
+                "unit": "ft-lbs",
+                "note": "Housing cap (25 N-m). Unverified - confirm in service manual"
+            },
+            "media": null
+        },
+        {
+            "id": 7,
+            "action": "Reinstall the housing drain plug",
+            "details": "Fit a new O-ring to the small drain plug and reinstall it in the housing cap. It is a small plastic plug: snug it down gently, to the service manual torque if you have it.",
+            "partId": "oil_filter_housing_toyota_2gr",
+            "tools": [],
+            "warnings": ["Over-tightening can crack the plastic cap"],
+            "requires": [6],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 8,
+            "action": "Reinstall the oil pan drain plug",
+            "details": "Fit a new drain plug gasket, thread the plug in by hand to avoid cross-threading, then torque it to spec.",
+            "partId": "oil_pan_toyota_2gr",
+            "tools": ["14mm socket", "Torque wrench"],
+            "warnings": ["Always use a new gasket", "Over-torquing can strip the oil pan threads"],
+            "requires": [3],
+            "torqueSpec": {
+                "value": 30,
+                "unit": "ft-lbs",
+                "note": "40 N-m. Unverified - confirm in service manual"
+            },
+            "media": null
+        },
+        {
+            "id": 9,
+            "action": "Refill with oil",
+            "details": "Using a funnel, add 0W-20 oil. Capacity with filter is about 6.4 US quarts (6.1 L) on most transverse 2GR-FE vehicles - check your owner's manual. Add most of it, then top up after checking the dipstick. Reinstall the filler cap.",
+            "partId": "oil_filler_cap_toyota_2gr",
+            "tools": ["Funnel"],
+            "warnings": ["Do not overfill - check with the dipstick", "Use the oil grade listed in your owner's manual"],
+            "requires": [1, 7, 8],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 10,
+            "action": "Run the engine and check for leaks",
+            "details": "Start the engine and let it idle for about a minute while you check the drain plug and filter housing for leaks. Shut it off.",
+            "partId": "oil_filter_housing_toyota_2gr",
+            "tools": [],
+            "warnings": ["Stay clear of moving parts and hot exhaust", "Shut off immediately if you see a leak"],
+            "requires": [9],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 11,
+            "action": "Refit the under cover and check the oil level",
+            "details": "Reinstall the engine under cover or close its access panel, then lower the vehicle. Wait a few minutes for the oil to settle, check the dipstick on level ground, and top up if needed.",
+            "partId": "engine_under_cover_toyota_2gr",
+            "tools": [],
+            "warnings": ["Check the level with the vehicle level, not on the stands"],
+            "requires": [10],
+            "torqueSpec": null,
+            "media": null
+        }
+    ],
+    "reinstallNotes": "Take the old oil and filter to a recycling center or auto parts store. Reset the maintenance reminder if equipped. Record the mileage and date."
+}
