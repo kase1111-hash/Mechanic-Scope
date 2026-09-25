@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  headless-tests:
+    name: Compile check + edit-mode tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Compiles every script in Assets/Scripts against the UnityEngine shim and runs
+      # Assets/Tests/EditMode. Exits non-zero on any compile error or test failure.
+      - name: Run headless test suite
+        run: ./run_tests.sh
+
+  standin-model:
+    name: Stand-in model is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      # The generator also fails if engine.json maps a node the stand-in does not define.
+      - name: Regenerate stand-in GLB
+        run: python3 Tools/StandInModel/generate_standin_glb.py
+
+      - name: Fail if the committed GLB differs from the generator output
+        run: git diff --exit-code -- Assets/StreamingAssets/Engines/gm_ls_gen4/gm_ls_gen4.glb
