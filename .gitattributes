@@ -1,0 +1,2 @@
+# Binary assets: never diff, merge or normalise line endings
+*.glb binary
