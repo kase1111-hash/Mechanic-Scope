@@ -102,6 +102,13 @@ namespace MechanicScope.Editor
             accessibilityGO.transform.SetParent(managersGO.transform);
             accessibilityGO.AddComponent<Accessibility.AccessibilityManager>();
 
+            // Voice commands. The native speech plugins reach the recognizer by GameObject name
+            // (UnitySendMessage), so this name must stay unique in the scene.
+            var voiceGO = new GameObject("VoiceCommands");
+            voiceGO.transform.SetParent(managersGO.transform);
+            voiceGO.AddComponent<Voice.VoiceFeedback>();
+            var voiceManager = voiceGO.AddComponent<Voice.VoiceCommandManager>();
+
             // === UI Canvas ===
             var canvasGO = new GameObject("UI Canvas");
             var canvas = canvasGO.AddComponent<Canvas>();
@@ -127,7 +134,7 @@ namespace MechanicScope.Editor
 
             // Header title
             var titleGO = CreateTextElement(headerGO.transform, "HeaderTitle", "Mechanic Scope",
-                new Vector2(0.15f, 0), new Vector2(0.85f, 1), 28, TextAlignmentOptions.Center);
+                new Vector2(0.15f, 0), new Vector2(0.70f, 1), 28, TextAlignmentOptions.Center);
 
             // Menu button
             var menuBtnGO = CreateButton(headerGO.transform, "MenuButton", "\u2630",
@@ -136,6 +143,12 @@ namespace MechanicScope.Editor
             // Settings button
             var settingsBtnGO = CreateButton(headerGO.transform, "SettingsButton", "\u2699",
                 new Vector2(0.85f, 0), new Vector2(1, 1));
+
+            // Voice (microphone) button. Hides itself at runtime if speech recognition is unavailable.
+            var micBtnGO = CreateButton(headerGO.transform, "VoiceButton", "MIC",
+                new Vector2(0.70f, 0), new Vector2(0.85f, 1));
+            micBtnGO.GetComponentInChildren<TextMeshProUGUI>().fontSize = 22;
+            var voiceButtonUI = micBtnGO.AddComponent<UI.VoiceButtonUI>();
 
             // === Screen Panels ===
             var splashScreen = CreateScreenPanel(canvasGO.transform, "SplashScreen");
@@ -210,6 +223,13 @@ namespace MechanicScope.Editor
             WireSerializedField(alignmentControlsUI, "arAlignment", arAlignment);
             WireSerializedField(completionSummaryUI, "procedureRunner", procedureRunner);
             WireSerializedField(completionSummaryUI, "modelLoader", modelLoader);
+
+            // Wire voice commands
+            WireSerializedField(voiceManager, "procedureRunner", procedureRunner);
+            WireSerializedField(voiceManager, "arAlignment", arAlignment);
+            WireSerializedField(voiceButtonUI, "voiceManager", voiceManager);
+            WireSerializedField(voiceButtonUI, "button", micBtnGO.GetComponent<Button>());
+            WireSerializedField(voiceButtonUI, "label", micBtnGO.GetComponentInChildren<TextMeshProUGUI>());
 
             // Wire ARAlignment references
             var arSO = new SerializedObject(arAlignment);

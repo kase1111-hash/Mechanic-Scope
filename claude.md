@@ -160,7 +160,7 @@ Procedure file (`procedures/*.json`):
 | Accessibility (haptics, text scaling) | Working | Native iOS/Android haptics |
 | SQLite database & repositories | **Opt-in** | Compiles, but no provider is bound. Disabled by default; app uses the JSON layer. See `Docs/SQLITE_SETUP.md` |
 | 3D model loading | Real, unexercised | Loads GLB via glTFast. Each engine ships a generated **stand-in** `.glb` (boxes named to match its `engine.json`); real models are still needed |
-| Voice commands | Partial | Command registration/dispatch works. `EditorVoiceRecognizer` only simulates input, and the iOS/Android recognizers `DllImport` a native speech plugin that is not in the repo, so no real recognition happens on any platform |
+| Voice commands | Implemented, untested on device | Whole-word command matching, push-to-talk/wake-word/always-listening, echo guard (20 headless tests). Native plugins in `Assets/Plugins/iOS` and `Assets/Plugins/Android`; the iOS `.mm` has never been compiled. See `Docs/VOICE.md` |
 | App initializer (AR systems) | Working | Waits up to 5 s for the ARSession to leave its initial state |
 | Unity project | **Never opened** | No `.meta` files or committed scene; run **MechanicScope > Setup Main Scene** on first open |
 
@@ -192,4 +192,5 @@ remove that engine from `STANDIN_ENGINES`.
 - `SPEC_SHEET.md` - Technical specification and architecture
 - `Docs/ADDING_ENGINES.md` - Engine model import guide
 - `Docs/PROCEDURE_FORMAT.md` - Procedure JSON specification
+- `Docs/VOICE.md` - Voice commands, privacy, and the on-device test checklist
 - `Docs/UNITY_SETUP.md` - Development environment setup

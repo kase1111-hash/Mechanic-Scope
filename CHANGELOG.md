@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Voice commands, end to end** (untested on device; see `Docs/VOICE.md`):
+  - Native plugins: `Assets/Plugins/iOS/MechanicScopeSpeech.mm` (Speech framework recognition and
+    AVSpeechSynthesizer speech) and `Assets/Plugins/Android/MechanicScopeSpeech.java`
+    (SpeechRecognizer on the UI thread, auto-restart in continuous modes).
+  - On-device recognition by default (`allowCloudRecognition` off): required on iOS, preferred on Android.
+  - Build post-processor adds the Android microphone permission and `<queries>` for speech and TTS
+    services, the iOS privacy strings, and Speech.framework.
+  - MIC button in the header (`VoiceButtonUI`), and the voice manager in the scene builder.
+  - 20 headless tests for matching, modes, the echo guard and the native message format.
 - **Second engine: Toyota 2GR-FE 3.5L V6** (`toyota_2gr_fe`) with two procedures: Oil and Filter
   Change (cartridge filter) and Replace Spark Plugs (front bank, then the rear bank under the intake
   plenum). Adds 10 engine-specific parts, and its own stand-in model. **The procedures are
@@ -41,6 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the JSON store by default. See `Docs/SQLITE_SETUP.md`.
 
 ### Fixed
+- Voice commands matched substrings, so "unlock" triggered "lock" and any sentence containing
+  "stop" stopped listening. Matching is now on whole words, ignoring case and punctuation.
+- The app could hear its own spoken replies as commands; results are now ignored while it speaks.
+- Push-to-talk never stopped after a command, and the manager did not notice when the platform
+  recognizer ended on its own.
+- Android spoken replies guessed their duration from text length; they now wait on the engine.
 - The project did not compile: `Mono.Data.Sqlite` was unavailable, `yield` sat inside try/catch in
   iterators, and `VoiceCommandManager` passed `RegisterCommand` arguments in the wrong order.
 - `run_tests.sh` reported success without running any tests.

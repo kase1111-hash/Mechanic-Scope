@@ -16,12 +16,11 @@ are gone. What is left is work that needs the Unity Editor and a device, which n
 | **0.3** 3D model | Generated **stand-in** `.glb` files ship for each engine (`Tools/StandInModel/`), with nodes named to match `engine.json` | Source or build real models |
 | **1** Vertical slice | Scene builder (**MechanicScope > Setup Main Scene**) creates and wires the scene | Run the builder, commit the scene, and test the full flow on a phone (M1) |
 | **2** Tests / data layer | 103 real edit-mode tests (data checks run per engine), run headlessly by `./run_tests.sh` and in CI; both data layers kept (SQLite opt-in) | — |
-| **3** Features | Highlighting, progress resume and accessibility are wired; voice is deferred | Verify on device |
+| **3** Features | Highlighting, progress resume, accessibility and voice (native plugins for both platforms) are wired | Verify on device, including the voice checklist in `Docs/VOICE.md` |
 
 **Milestone status:** M0 is blocked only on a first Unity open. M1 needs a device run. M2 is met.
 M3's content bar is met in data: a second engine (Toyota 2GR-FE) with an oil change and spark plug
-procedure, whose specs still need checking against a service manual. M3 still needs voice on at
-least one platform (or a decision to defer it).
+procedure, whose specs still need checking against a service manual. Voice is implemented for both platforms; M3's voice bar is met once it works on a device.
 
 ---
 

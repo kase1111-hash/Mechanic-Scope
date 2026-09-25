@@ -467,7 +467,7 @@ public class UIState
 
 ---
 
-## 5. Voice Command Module (Optional — Not Yet Functional)
+## 5. Voice Command Module (Optional — Implemented, Untested on Device)
 
 ### 5.1 Supported Commands
 | Phrase | Action |
@@ -485,10 +485,10 @@ public class UIState
 - Use on-device speech recognition (no network required)
 - iOS: `SFSpeechRecognizer`
 - Android: `SpeechRecognizer` API
-- Unity wrapper: Custom native plugin required (not yet built)
-- Wake word optional (can use always-listening or push-to-talk)
+- Unity wrapper: native plugins in `Assets/Plugins/iOS/MechanicScopeSpeech.mm` and `Assets/Plugins/Android/MechanicScopeSpeech.java`
+- Activation: push-to-talk (default), wake word, or always-listening
 
-> **Current status:** `VoiceCommandManager` and all three recognizers (`EditorVoiceRecognizer`, `IOSVoiceRecognizer`, `AndroidVoiceRecognizer`) exist in `Assets/Scripts/Voice/` and compile. The Editor recognizer only simulates input. The Android recognizer calls the platform `SpeechRecognizer` through JNI and has not been tested on a device. The iOS recognizer `DllImport`s a native Speech-framework plugin that has not been written, so voice does not work on iOS.
+> **Current status:** Implemented on both platforms but never run on a device, and the iOS plugin has never been compiled (no Apple toolchain was available). Command matching and mode handling are covered by headless tests. Full command list, privacy notes and the device test checklist: `Docs/VOICE.md`.
 
 ---
 
@@ -537,7 +537,7 @@ Application.persistentDataPath/
 | Part database | §2.3 | **Working** | JSON store is active. The SQLite layer (FTS search, migrations) is implemented but disabled by default; see `Docs/SQLITE_SETUP.md` |
 | Progress tracker | §2.4 | **Working** | Save/load progress, repair history, preferences |
 | 3D model loading | §2.1 | **Working** | glTFast GLB loading. Ships a generated stand-in `.glb`; a real model is still needed |
-| Voice commands | §5 | **Partial** | Manager works; Android recognizer untested; iOS needs a native plugin |
+| Voice commands | §5 | **Untested** | Implemented for iOS and Android with native plugins; needs device testing (`Docs/VOICE.md`) |
 | Part highlighting | §4.3 | **Working** | URP shader with Fresnel outline + pulse animation |
 | Performance monitor | §9 | **Working** | FPS, memory, battery tracking |
 | UI screens & navigation | §4 | **Working** | 8-mode state machine, all screens implemented |
