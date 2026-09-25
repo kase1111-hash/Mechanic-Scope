@@ -17,70 +17,93 @@ namespace MechanicScope.Tests
     [TestFixture]
     public class ShippedDataValidationTests
     {
-        private const string EngineId = "gm_ls_gen4";
+        private static string EnginesRoot => Path.Combine(Application.streamingAssetsPath, "Engines");
 
-        private static string EngineDirectory =>
-            Path.Combine(Application.streamingAssetsPath, "Engines", EngineId);
+        /// <summary>
+        /// Every engine folder that ships. Each test below runs once per engine, so a new engine is
+        /// validated as soon as its folder exists, with no test changes.
+        /// </summary>
+        private static IEnumerable<string> EngineIds() =>
+            Directory.GetDirectories(EnginesRoot).Select(Path.GetFileName).OrderBy(id => id);
+
+        private static string EngineDirectory(string engineId) => Path.Combine(EnginesRoot, engineId);
 
         private static string PartsDataPath =>
             Path.Combine(Application.dataPath, "Resources", "DefaultPartsData.json");
 
-        private static EngineManifest LoadManifest()
+        private static EngineManifest LoadManifest(string engineId)
         {
-            string path = Path.Combine(EngineDirectory, "engine.json");
+            string path = Path.Combine(EngineDirectory(engineId), "engine.json");
             Assert.IsTrue(File.Exists(path), $"Engine manifest missing: {path}");
 
             EngineManifest manifest = JsonUtility.FromJson<EngineManifest>(File.ReadAllText(path));
-            Assert.IsNotNull(manifest, "engine.json failed to deserialize");
+            Assert.IsNotNull(manifest, $"{engineId}/engine.json failed to deserialize");
             return manifest;
         }
 
-        private static List<(string File, Procedure Procedure)> LoadProcedures()
+        private static List<(string File, Procedure Procedure)> LoadProcedures(string engineId)
         {
-            string dir = Path.Combine(EngineDirectory, "procedures");
+            string dir = Path.Combine(EngineDirectory(engineId), "procedures");
             Assert.IsTrue(Directory.Exists(dir), $"Procedures directory missing: {dir}");
 
             var loaded = new List<(string, Procedure)>();
             foreach (string file in Directory.GetFiles(dir, "*.json"))
             {
+                string label = $"{engineId}/{Path.GetFileName(file)}";
                 Procedure procedure = JsonUtility.FromJson<Procedure>(File.ReadAllText(file));
-                Assert.IsNotNull(procedure, $"{Path.GetFileName(file)} failed to deserialize");
-                loaded.Add((Path.GetFileName(file), procedure));
+                Assert.IsNotNull(procedure, $"{label} failed to deserialize");
+                loaded.Add((label, procedure));
             }
 
-            Assert.IsNotEmpty(loaded, "No bundled procedures found");
+            Assert.IsNotEmpty(loaded, $"{engineId}: no bundled procedures found");
             return loaded;
         }
 
-        private static HashSet<string> LoadPartIds()
+        private static PartData[] LoadParts()
         {
             Assert.IsTrue(File.Exists(PartsDataPath), $"Parts data missing: {PartsDataPath}");
 
             PartsDataFile data = JsonUtility.FromJson<PartsDataFile>(File.ReadAllText(PartsDataPath));
             Assert.IsNotNull(data, "DefaultPartsData.json failed to deserialize");
             Assert.IsNotNull(data.parts, "DefaultPartsData.json has no parts array");
+            return data.parts;
+        }
 
-            return new HashSet<string>(data.parts.Select(p => p.id));
+        private static HashSet<string> LoadPartIds() => new HashSet<string>(LoadParts().Select(p => p.id));
+
+        // === Engines ===
+
+        [Test]
+        public void Engines_AtLeastOneShips()
+        {
+            CollectionAssert.IsNotEmpty(EngineIds(), $"No engine folders in {EnginesRoot}");
+        }
+
+        [Test]
+        public void Parts_IdsAreUnique()
+        {
+            CollectionAssert.AllItemsAreUnique(LoadParts().Select(p => p.id).ToList(),
+                "Duplicate part id in DefaultPartsData.json");
         }
 
         // === Manifest ===
 
-        [Test]
-        public void EngineManifest_HasRequiredFields()
+        [TestCaseSource(nameof(EngineIds))]
+        public void EngineManifest_HasRequiredFields(string engineId)
         {
-            EngineManifest manifest = LoadManifest();
+            EngineManifest manifest = LoadManifest(engineId);
 
-            Assert.AreEqual(EngineId, manifest.id);
+            Assert.AreEqual(engineId, manifest.id, "engine.json id must match its folder name");
             Assert.IsNotEmpty(manifest.name);
             Assert.IsNotEmpty(manifest.modelFile);
             Assert.IsNotNull(manifest.partMappings);
             Assert.IsNotEmpty(manifest.partMappings);
         }
 
-        [Test]
-        public void EngineManifest_PartMappingsAreCompleteAndUnique()
+        [TestCaseSource(nameof(EngineIds))]
+        public void EngineManifest_PartMappingsAreCompleteAndUnique(string engineId)
         {
-            EngineManifest manifest = LoadManifest();
+            EngineManifest manifest = LoadManifest(engineId);
 
             foreach (PartMapping mapping in manifest.partMappings)
             {
@@ -95,10 +118,10 @@ namespace MechanicScope.Tests
             CollectionAssert.AllItemsAreUnique(partIds, "Duplicate partId in engine.json");
         }
 
-        [Test]
-        public void EngineManifest_DefaultAlignmentIsWellFormed()
+        [TestCaseSource(nameof(EngineIds))]
+        public void EngineManifest_DefaultAlignmentIsWellFormed(string engineId)
         {
-            EngineManifest manifest = LoadManifest();
+            EngineManifest manifest = LoadManifest(engineId);
 
             Assert.IsNotNull(manifest.defaultAlignment);
             Assert.AreEqual(3, manifest.defaultAlignment.position.Length);
@@ -111,10 +134,10 @@ namespace MechanicScope.Tests
             }
         }
 
-        [Test]
-        public void EngineManifest_MappedPartsExistInPartsDatabase()
+        [TestCaseSource(nameof(EngineIds))]
+        public void EngineManifest_MappedPartsExistInPartsDatabase(string engineId)
         {
-            EngineManifest manifest = LoadManifest();
+            EngineManifest manifest = LoadManifest(engineId);
             HashSet<string> knownParts = LoadPartIds();
 
             var unknown = manifest.partMappings
@@ -127,24 +150,41 @@ namespace MechanicScope.Tests
                 "so tapping those parts shows no information");
         }
 
+        [TestCaseSource(nameof(EngineIds))]
+        public void EngineManifest_MappedPartsListThisEngine(string engineId)
+        {
+            EngineManifest manifest = LoadManifest(engineId);
+            Dictionary<string, PartData> parts = LoadParts().ToDictionary(p => p.id);
+
+            var unlisted = manifest.partMappings
+                .Select(m => m.partId)
+                .Where(id => parts.TryGetValue(id, out PartData part) &&
+                             (part.engines == null || !part.engines.Contains(engineId)))
+                .ToList();
+
+            CollectionAssert.IsEmpty(unlisted,
+                $"These parts are mapped on {engineId} but their 'engines' list in DefaultPartsData.json " +
+                "omits it, so engine-filtered part lookups will not return them");
+        }
+
         // === Model ===
 
-        [Test]
-        public void EngineModel_ExistsAndIsGlb()
+        [TestCaseSource(nameof(EngineIds))]
+        public void EngineModel_ExistsAndIsGlb(string engineId)
         {
-            EngineManifest manifest = LoadManifest();
-            string path = Path.Combine(EngineDirectory, manifest.modelFile);
+            EngineManifest manifest = LoadManifest(engineId);
+            string path = Path.Combine(EngineDirectory(engineId), manifest.modelFile);
 
             Assert.IsTrue(File.Exists(path),
-                $"engine.json references {manifest.modelFile} but it is not in {EngineDirectory}");
+                $"engine.json references {manifest.modelFile} but it is not in {EngineDirectory(engineId)}");
             Assert.IsNotEmpty(ReadGlbNodeNames(path), $"{manifest.modelFile} contains no named nodes");
         }
 
-        [Test]
-        public void EngineModel_ContainsEveryMappedNode()
+        [TestCaseSource(nameof(EngineIds))]
+        public void EngineModel_ContainsEveryMappedNode(string engineId)
         {
-            EngineManifest manifest = LoadManifest();
-            HashSet<string> nodeNames = ReadGlbNodeNames(Path.Combine(EngineDirectory, manifest.modelFile));
+            EngineManifest manifest = LoadManifest(engineId);
+            HashSet<string> nodeNames = ReadGlbNodeNames(Path.Combine(EngineDirectory(engineId), manifest.modelFile));
 
             var missing = manifest.partMappings
                 .Select(m => m.nodeNameInModel)
@@ -224,23 +264,23 @@ namespace MechanicScope.Tests
 
         // === Procedures ===
 
-        [Test]
-        public void Procedures_HaveRequiredFields()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_HaveRequiredFields(string engineId)
         {
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 Assert.IsNotEmpty(procedure.id, $"{file}: missing id");
                 Assert.IsNotEmpty(procedure.name, $"{file}: missing name");
-                Assert.AreEqual(EngineId, procedure.engineId, $"{file}: wrong engineId");
+                Assert.AreEqual(engineId, procedure.engineId, $"{file}: wrong engineId");
                 Assert.IsNotNull(procedure.steps, $"{file}: missing steps");
                 Assert.IsNotEmpty(procedure.steps, $"{file}: has no steps");
             }
         }
 
-        [Test]
-        public void Procedures_StepIdsAreUniqueAndPositive()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_StepIdsAreUniqueAndPositive(string engineId)
         {
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 var ids = procedure.steps.Select(s => s.id).ToList();
                 CollectionAssert.AllItemsAreUnique(ids, $"{file}: duplicate step ids");
@@ -252,10 +292,10 @@ namespace MechanicScope.Tests
             }
         }
 
-        [Test]
-        public void Procedures_EveryStepHasAnAction()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_EveryStepHasAnAction(string engineId)
         {
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 foreach (ProcedureStep step in procedure.steps)
                 {
@@ -264,10 +304,10 @@ namespace MechanicScope.Tests
             }
         }
 
-        [Test]
-        public void Procedures_DependenciesReferenceExistingSteps()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_DependenciesReferenceExistingSteps(string engineId)
         {
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 var ids = new HashSet<int>(procedure.steps.Select(s => s.id));
 
@@ -285,10 +325,10 @@ namespace MechanicScope.Tests
             }
         }
 
-        [Test]
-        public void Procedures_AreCompletableWithNoDeadlocks()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_AreCompletableWithNoDeadlocks(string engineId)
         {
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 // Replays the runner's own rule: a step unlocks once all of its requires are done.
                 // Anything still locked when no further progress is possible is unreachable —
@@ -314,10 +354,10 @@ namespace MechanicScope.Tests
             }
         }
 
-        [Test]
-        public void Procedures_TorqueSpecsAreSensible()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_TorqueSpecsAreSensible(string engineId)
         {
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 foreach (ProcedureStep step in procedure.steps)
                 {
@@ -331,12 +371,12 @@ namespace MechanicScope.Tests
             }
         }
 
-        [Test]
-        public void Procedures_ReferencedPartsExistInPartsDatabase()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_ReferencedPartsExistInPartsDatabase(string engineId)
         {
             HashSet<string> knownParts = LoadPartIds();
 
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 foreach (ProcedureStep step in procedure.steps)
                 {
@@ -348,13 +388,13 @@ namespace MechanicScope.Tests
             }
         }
 
-        [Test]
-        public void Procedures_ReferencedPartsAreMappedToModelNodes()
+        [TestCaseSource(nameof(EngineIds))]
+        public void Procedures_ReferencedPartsAreMappedToModelNodes(string engineId)
         {
-            EngineManifest manifest = LoadManifest();
+            EngineManifest manifest = LoadManifest(engineId);
             var mapped = new HashSet<string>(manifest.partMappings.Select(m => m.partId));
 
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 foreach (ProcedureStep step in procedure.steps)
                 {
@@ -371,10 +411,10 @@ namespace MechanicScope.Tests
 
         // === End-to-end through the real runner ===
 
-        [Test]
-        public void ShippedProcedures_RunToCompletionThroughTheRunner()
+        [TestCaseSource(nameof(EngineIds))]
+        public void ShippedProcedures_RunToCompletionThroughTheRunner(string engineId)
         {
-            foreach ((string file, Procedure procedure) in LoadProcedures())
+            foreach ((string file, Procedure procedure) in LoadProcedures(engineId))
             {
                 var go = new GameObject("ShippedProcedureRunner");
                 try
@@ -383,7 +423,7 @@ namespace MechanicScope.Tests
 
                     bool completed = false;
                     runner.OnProcedureCompleted += () => completed = true;
-                    runner.LoadProcedure(procedure, EngineId);
+                    runner.LoadProcedure(procedure, engineId);
 
                     Assert.IsTrue(runner.IsLoaded, $"{file}: failed to load");
                     Assert.IsNotEmpty(runner.AvailableSteps, $"{file}: no step is available at start");
