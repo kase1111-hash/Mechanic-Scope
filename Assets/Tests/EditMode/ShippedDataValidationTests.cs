@@ -127,6 +127,101 @@ namespace MechanicScope.Tests
                 "so tapping those parts shows no information");
         }
 
+        // === Model ===
+
+        [Test]
+        public void EngineModel_ExistsAndIsGlb()
+        {
+            EngineManifest manifest = LoadManifest();
+            string path = Path.Combine(EngineDirectory, manifest.modelFile);
+
+            Assert.IsTrue(File.Exists(path),
+                $"engine.json references {manifest.modelFile} but it is not in {EngineDirectory}");
+            Assert.IsNotEmpty(ReadGlbNodeNames(path), $"{manifest.modelFile} contains no named nodes");
+        }
+
+        [Test]
+        public void EngineModel_ContainsEveryMappedNode()
+        {
+            EngineManifest manifest = LoadManifest();
+            HashSet<string> nodeNames = ReadGlbNodeNames(Path.Combine(EngineDirectory, manifest.modelFile));
+
+            var missing = manifest.partMappings
+                .Select(m => m.nodeNameInModel)
+                .Where(name => !nodeNames.Contains(name))
+                .ToList();
+
+            CollectionAssert.IsEmpty(missing,
+                "engine.json maps node names the model does not contain, so those parts can never be " +
+                "tapped or highlighted. Rename the model's nodes or update nodeNameInModel.");
+        }
+
+        /// <summary>
+        /// Returns the names of the glTF nodes in a binary .glb. glTFast names each GameObject after
+        /// its node, and EngineModelLoader matches partMappings against those GameObject names, so
+        /// node names (not mesh names) are what matter. Parsed by hand because JsonUtility cannot
+        /// read the glTF schema and no general JSON library is available inside Unity.
+        /// </summary>
+        private static HashSet<string> ReadGlbNodeNames(string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            Assert.GreaterOrEqual(bytes.Length, 20, $"{path} is too short to be a GLB");
+            Assert.AreEqual(0x46546C67u, System.BitConverter.ToUInt32(bytes, 0), $"{path} lacks the glTF magic");
+            Assert.AreEqual(2u, System.BitConverter.ToUInt32(bytes, 4), $"{path} is not glTF 2.0");
+
+            int jsonLength = (int)System.BitConverter.ToUInt32(bytes, 12);
+            Assert.AreEqual(0x4E4F534Au, System.BitConverter.ToUInt32(bytes, 16), "First GLB chunk is not JSON");
+            string json = System.Text.Encoding.UTF8.GetString(bytes, 20, jsonLength);
+
+            var names = new HashSet<string>();
+            int nodesKey = json.IndexOf("\"nodes\"", System.StringComparison.Ordinal);
+            // The scene object also has a "nodes" key (an int array); the top-level one holds objects.
+            while (nodesKey >= 0)
+            {
+                int open = json.IndexOf('[', nodesKey);
+                int next = SkipWhitespace(json, open + 1);
+                if (next < json.Length && json[next] == '{')
+                {
+                    string nodes = json.Substring(open, MatchingBracket(json, open) - open + 1);
+                    foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(
+                                 nodes, "\"name\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\""))
+                    {
+                        names.Add(System.Text.RegularExpressions.Regex.Unescape(m.Groups[1].Value));
+                    }
+                    break;
+                }
+                nodesKey = json.IndexOf("\"nodes\"", nodesKey + 1, System.StringComparison.Ordinal);
+            }
+            return names;
+        }
+
+        private static int SkipWhitespace(string s, int i)
+        {
+            while (i < s.Length && char.IsWhiteSpace(s[i])) i++;
+            return i;
+        }
+
+        /// <summary>Index of the ']' closing the '[' at <paramref name="open"/>, ignoring brackets in strings.</summary>
+        private static int MatchingBracket(string s, int open)
+        {
+            int depth = 0;
+            bool inString = false;
+            for (int i = open; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (inString)
+                {
+                    if (c == '\\') i++;
+                    else if (c == '"') inString = false;
+                }
+                else if (c == '"') inString = true;
+                else if (c == '[' || c == '{') depth++;
+                else if ((c == ']' || c == '}') && --depth == 0) return i;
+            }
+            Assert.Fail("Unterminated nodes array in GLB JSON chunk");
+            return -1;
+        }
+
         // === Procedures ===
 
         [Test]

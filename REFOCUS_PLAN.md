@@ -4,28 +4,22 @@ This plan restructures development around one goal: **a single working vertical 
 
 ---
 
-## Current State
+## Current State (updated 2026-09-25)
 
-| Layer | Status | Files | Notes |
-|-------|--------|-------|-------|
-| AR alignment | Real | `ARAlignment.cs` (492 lines) | Touch controls, raycasting, state machine — production-quality |
-| Procedure engine | Real | `ProcedureRunner.cs` (578 lines) | Dependency resolution, step sequencing — production-quality |
-| 3D model loading | **Stub** | `EngineModelLoader.cs` (585 lines) | `LoadGLBModel()` at line 199 creates cubes. This is the blocker. |
-| Part database | Real | `PartDatabase.cs` + `PartRepository.cs` | Two implementations (JSON Phase 1, SQLite Phase 2) — both work |
-| Progress tracking | Real | `ProgressTracker.cs` + `ProgressRepository.cs` | Two implementations — both work |
-| SQLite layer | Real | `SQLiteDatabase.cs`, `DataManager.cs` | Migrations, transactions — production-quality |
-| UI navigation | Real | `MainUIController.cs` (429 lines) | 8-mode state machine, event wiring — complete |
-| Voice commands | **Broken** | `VoiceCommandManager.cs`, `VoiceRecognizers.cs` | Platform recognizers exist as `#if` stubs with native DLL imports but no native plugin binaries |
-| LOD manager | **Stub** | `LODManager.cs` | `SimplifyMesh()` returns input unchanged |
-| Accessibility | Real | 4 files | Native haptics, text scaling — works but premature |
-| App Store tooling | Real | 3 files | Build configs, screenshots — premature |
-| Performance monitor | Real | `PerformanceMonitor.cs` | FPS/memory/battery — works but premature |
-| Asset optimizer | Real | `AssetOptimizer.cs` | Texture/mesh optimization — works but no assets to optimize |
-| Procedure editor | Real | `ProcedureEditorWindow.cs` | In-editor tool — functional |
-| Highlight shader | Real | `PartHighlight.shader` | URP Fresnel + outline + pulse — production-ready |
-| Unity project | **Missing** | No `ProjectSettings/`, `Packages/manifest.json`, `.meta` files | Never opened in Unity |
+Phases 0–3 are done **in code**. The "Current State" table this plan started from, and the GLTFUtility
+snippets in Phase 0.2 / 1.1 below, are historical: the project uses glTFast, and the placeholder cubes
+are gone. What is left is work that needs the Unity Editor and a device, which nobody has done yet.
 
-**Bottom line:** ~60% of the code is real and production-quality. The project is blocked by one critical gap (3D model loading) and one infrastructure gap (no Unity project files).
+| Phase | Code | Remaining |
+|-------|------|-----------|
+| **0** Infrastructure | Done: ProjectSettings, `manifest.json`, glTFast loader, compile fixes | Open in Unity 2022.3 for the first time (no `.meta` files yet) and confirm zero errors |
+| **0.3** 3D model | A generated **stand-in** `gm_ls_gen4.glb` ships (`Tools/StandInModel/`), with nodes named to match `engine.json` | Source or build a real model |
+| **1** Vertical slice | Scene builder (**MechanicScope > Setup Main Scene**) creates and wires the scene | Run the builder, commit the scene, and test the full flow on a phone (M1) |
+| **2** Tests / data layer | 84 real edit-mode tests, run headlessly by `./run_tests.sh` and in CI; both data layers kept (SQLite opt-in) | — |
+| **3** Features | Highlighting, progress resume and accessibility are wired; voice is deferred | Verify on device; add a second engine (M3) |
+
+**Milestone status:** M0 is blocked only on a first Unity open. M1 needs a device run. M2 is met.
+M3 still needs a second engine, and voice on at least one platform (or a decision to defer it).
 
 ---
 
