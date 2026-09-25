@@ -1,0 +1,181 @@
+{
+    "id": "replace_spark_plugs",
+    "name": "Replace Spark Plugs",
+    "description": "Replace all six spark plugs on Toyota 2GR-FE 3.5L V6 engines (transverse applications). The front bank is straightforward; the rear bank sits under the intake plenum, which has to come off. UNVERIFIED DRAFT: torque values have not been checked against a Toyota service manual - confirm them for your vehicle before relying on them.",
+    "engineId": "toyota_2gr_fe",
+    "estimatedTime": "1.5-3 hours",
+    "difficulty": "intermediate",
+    "tools": [
+        "10mm socket",
+        "5/8 in (16mm) thin-wall spark plug socket",
+        "Socket extensions and a swivel",
+        "Torque wrench",
+        "Flat-blade screwdriver or trim tool",
+        "Masking tape or clean rags"
+    ],
+    "steps": [
+        {
+            "id": 1,
+            "action": "Let the engine cool and remove the engine cover",
+            "details": "Work on a cold engine: aluminium cylinder head threads are easily damaged when hot. Lift the plastic engine cover straight up off its grommets.",
+            "partId": "engine_cover_toyota_2gr",
+            "tools": [],
+            "warnings": ["Never remove spark plugs from a hot aluminium head"],
+            "requires": [],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 2,
+            "action": "Disconnect the negative battery terminal",
+            "details": "Loosen the terminal nut and move the cable away from the battery post. You will be unplugging sensors and the throttle body when the plenum comes off.",
+            "partId": "battery_negative",
+            "tools": ["10mm socket"],
+            "warnings": ["Radio presets and learned idle may reset"],
+            "requires": [],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 3,
+            "action": "Remove the front bank ignition coils",
+            "details": "On the radiator-side bank, release the connector lock and unplug each of the three coils. Remove each coil's 10mm bolt and pull the coil straight up out of the plug well.",
+            "partId": "ignition_coils_front_toyota_2gr",
+            "tools": ["10mm socket"],
+            "warnings": ["Pull on the coil body, not the wiring", "Keep track of which coil came from which cylinder"],
+            "requires": [1, 2],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 4,
+            "action": "Remove the front bank spark plugs",
+            "details": "Blow any debris out of the plug wells first. Remove the three plugs with a 5/8 in thin-wall plug socket and an extension.",
+            "partId": "spark_plugs_front_toyota_2gr",
+            "tools": ["5/8 in (16mm) thin-wall spark plug socket", "Socket extensions and a swivel"],
+            "warnings": ["Clear the wells before removal so debris can't fall into the cylinder"],
+            "requires": [3],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 5,
+            "action": "Install new front bank spark plugs",
+            "details": "Thread each new plug in by hand first to avoid cross-threading, then torque to spec. The factory iridium plugs come pre-gapped (about 1.0-1.1 mm); don't try to re-gap them.",
+            "partId": "spark_plugs_front_toyota_2gr",
+            "tools": ["5/8 in (16mm) thin-wall spark plug socket", "Torque wrench"],
+            "warnings": ["Always start plugs by hand", "Do not re-gap iridium plugs"],
+            "requires": [4],
+            "torqueSpec": {
+                "value": 15,
+                "unit": "ft-lbs",
+                "note": "20 N-m. Unverified - confirm in service manual"
+            },
+            "media": null
+        },
+        {
+            "id": 6,
+            "action": "Reinstall the front bank ignition coils",
+            "details": "Push each coil fully onto its plug, install its 10mm bolt, and reconnect the connector until the lock clicks.",
+            "partId": "ignition_coils_front_toyota_2gr",
+            "tools": ["10mm socket"],
+            "warnings": ["An unclicked connector causes a misfire"],
+            "requires": [5],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 7,
+            "action": "Remove the intake plenum",
+            "details": "Unplug the throttle body connector and any sensor connectors on the plenum. Disconnect the PCV and brake booster vacuum hoses. Remove the plenum's bolts, nuts and support brackets, then lift the plenum off. On some vehicles the wiper cowl must come off first for clearance.",
+            "partId": "intake_plenum_toyota_2gr",
+            "tools": ["10mm socket", "Socket extensions and a swivel", "Flat-blade screwdriver or trim tool"],
+            "warnings": ["Photograph hose and connector routing before disconnecting", "Don't drop hardware into the intake ports"],
+            "requires": [1, 2],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 8,
+            "action": "Cover the open intake ports",
+            "details": "Cover the open intake runners with masking tape or clean rags so nothing can fall into the engine while you work.",
+            "partId": "intake_plenum_toyota_2gr",
+            "tools": ["Masking tape or clean rags"],
+            "warnings": ["A dropped bolt in an intake port can destroy the engine"],
+            "requires": [7],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 9,
+            "action": "Remove the rear bank ignition coils",
+            "details": "On the firewall-side bank, unplug and remove the three coils the same way as the front bank.",
+            "partId": "ignition_coils_rear_toyota_2gr",
+            "tools": ["10mm socket"],
+            "warnings": ["Pull on the coil body, not the wiring"],
+            "requires": [8],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 10,
+            "action": "Remove the rear bank spark plugs",
+            "details": "Clear the plug wells, then remove the three plugs. A swivel or extra extension helps against the firewall.",
+            "partId": "spark_plugs_rear_toyota_2gr",
+            "tools": ["5/8 in (16mm) thin-wall spark plug socket", "Socket extensions and a swivel"],
+            "warnings": ["Clear the wells before removal so debris can't fall into the cylinder"],
+            "requires": [9],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 11,
+            "action": "Install new rear bank spark plugs",
+            "details": "Start each plug by hand, then torque to spec.",
+            "partId": "spark_plugs_rear_toyota_2gr",
+            "tools": ["5/8 in (16mm) thin-wall spark plug socket", "Torque wrench"],
+            "warnings": ["Always start plugs by hand", "Do not re-gap iridium plugs"],
+            "requires": [10],
+            "torqueSpec": {
+                "value": 15,
+                "unit": "ft-lbs",
+                "note": "20 N-m. Unverified - confirm in service manual"
+            },
+            "media": null
+        },
+        {
+            "id": 12,
+            "action": "Reinstall the rear bank ignition coils",
+            "details": "Seat each coil, install its 10mm bolt, and reconnect the connector until the lock clicks.",
+            "partId": "ignition_coils_rear_toyota_2gr",
+            "tools": ["10mm socket"],
+            "warnings": ["An unclicked connector causes a misfire"],
+            "requires": [11],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 13,
+            "action": "Reinstall the intake plenum",
+            "details": "Remove the tape or rags from the intake ports. Fit new plenum gaskets, set the plenum in place, and tighten its fasteners evenly to the service manual torque. Reconnect every hose and connector you removed.",
+            "partId": "intake_plenum_toyota_2gr",
+            "tools": ["10mm socket", "Torque wrench"],
+            "warnings": ["Use new gaskets - a vacuum leak causes rough idle and a check engine light", "Count your rags: every one must come out of the ports"],
+            "requires": [12],
+            "torqueSpec": null,
+            "media": null
+        },
+        {
+            "id": 14,
+            "action": "Reconnect the battery and test",
+            "details": "Reconnect the negative battery terminal. Start the engine and listen for a smooth idle and any vacuum leak hiss, then reinstall the engine cover.",
+            "partId": "battery_negative",
+            "tools": ["10mm socket"],
+            "warnings": ["A flashing check engine light means a misfire - recheck coil connectors"],
+            "requires": [6, 13],
+            "torqueSpec": null,
+            "media": null
+        }
+    ],
+    "reinstallNotes": "Replace plugs as a full set of six. Toyota lists long-life iridium plugs for the 2GR-FE; confirm the part number and interval for your vehicle. Record the mileage and date."
+}

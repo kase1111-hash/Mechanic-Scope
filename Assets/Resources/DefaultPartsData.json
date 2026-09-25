@@ -21,7 +21,7 @@
             "category": "electrical",
             "imagePath": null,
             "crossReferences": [],
-            "engines": ["gm_ls_gen4"],
+            "engines": ["gm_ls_gen4", "toyota_2gr_fe"],
             "specs": [
                 {"key": "Terminal Size", "value": "10mm nut"},
                 {"key": "Cable Gauge", "value": "4 AWG"}
@@ -164,6 +164,142 @@
                 {"key": "Material", "value": "Composite or Aluminum"},
                 {"key": "Bolt Torque", "value": "106 in-lbs"},
                 {"key": "Gasket Type", "value": "Integrated rubber seal"}
+            ]
+        },
+        {
+            "id": "engine_cover_toyota_2gr",
+            "name": "Engine Cover",
+            "description": "Plastic cover over the top of the engine. Held on by rubber grommets; lifts straight off.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Fasteners", "value": "Push-fit grommets"}
+            ]
+        },
+        {
+            "id": "intake_plenum_toyota_2gr",
+            "name": "Intake Plenum (Surge Tank)",
+            "description": "Upper intake manifold that sits over the rear (firewall-side) cylinder bank. Must be removed to reach the rear spark plugs and coils.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Gaskets", "value": "Replace on every removal"},
+                {"key": "Fastener Torque", "value": "See service manual (Unverified - confirm in service manual)"}
+            ]
+        },
+        {
+            "id": "ignition_coils_front_toyota_2gr",
+            "name": "Ignition Coils (Front Bank)",
+            "description": "Coil-on-plug ignition coils for the three radiator-side cylinders. Each is held by one bolt.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Quantity", "value": "3"},
+                {"key": "Bolt Size", "value": "10mm"},
+                {"key": "Bolt Torque", "value": "About 7 ft-lbs / 10 N-m (Unverified - confirm in service manual)"}
+            ]
+        },
+        {
+            "id": "ignition_coils_rear_toyota_2gr",
+            "name": "Ignition Coils (Rear Bank)",
+            "description": "Coil-on-plug ignition coils for the three firewall-side cylinders, underneath the intake plenum.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Quantity", "value": "3"},
+                {"key": "Bolt Size", "value": "10mm"},
+                {"key": "Bolt Torque", "value": "About 7 ft-lbs / 10 N-m (Unverified - confirm in service manual)"}
+            ]
+        },
+        {
+            "id": "spark_plugs_front_toyota_2gr",
+            "name": "Spark Plugs (Front Bank)",
+            "description": "Long-life iridium spark plugs for the three radiator-side cylinders.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": ["Denso FK20HR11", "Toyota 90919-01253"],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Quantity", "value": "3"},
+                {"key": "Socket", "value": "5/8 in (16mm) thin-wall"},
+                {"key": "Gap", "value": "1.0-1.1 mm, pre-set (do not re-gap)"},
+                {"key": "Torque", "value": "15 ft-lbs / 20 N-m (Unverified - confirm in service manual)"}
+            ]
+        },
+        {
+            "id": "spark_plugs_rear_toyota_2gr",
+            "name": "Spark Plugs (Rear Bank)",
+            "description": "Long-life iridium spark plugs for the three firewall-side cylinders. Reached by removing the intake plenum.",
+            "category": "electrical",
+            "imagePath": null,
+            "crossReferences": ["Denso FK20HR11", "Toyota 90919-01253"],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Quantity", "value": "3"},
+                {"key": "Socket", "value": "5/8 in (16mm) thin-wall"},
+                {"key": "Gap", "value": "1.0-1.1 mm, pre-set (do not re-gap)"},
+                {"key": "Torque", "value": "15 ft-lbs / 20 N-m (Unverified - confirm in service manual)"}
+            ]
+        },
+        {
+            "id": "oil_filler_cap_toyota_2gr",
+            "name": "Oil Filler Cap",
+            "description": "Screw-on cap on the front valve cover where fresh oil is added.",
+            "category": "fluid",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Oil Grade", "value": "0W-20 (check owner's manual)"}
+            ]
+        },
+        {
+            "id": "oil_pan_toyota_2gr",
+            "name": "Oil Pan",
+            "description": "Engine oil reservoir at the bottom of the engine, with the drain plug.",
+            "category": "fluid",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Capacity with Filter", "value": "About 6.4 US qt / 6.1 L (Unverified - confirm in service manual)"},
+                {"key": "Drain Plug Size", "value": "14mm"},
+                {"key": "Drain Plug Torque", "value": "30 ft-lbs / 40 N-m (Unverified - confirm in service manual)"},
+                {"key": "Drain Plug Gasket", "value": "Replace every change"}
+            ]
+        },
+        {
+            "id": "oil_filter_housing_toyota_2gr",
+            "name": "Oil Filter Housing",
+            "description": "Holds the paper cartridge oil filter at the front bottom of the engine. The cap has its own small drain plug; a drain pipe supplied with the filter drains the housing before the cap comes off.",
+            "category": "fluid",
+            "imagePath": null,
+            "crossReferences": ["Toyota 04152-YZZA6"],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Filter Type", "value": "Cartridge (paper element + O-rings)"},
+                {"key": "Cap Wrench", "value": "64mm"},
+                {"key": "Cap Torque", "value": "18 ft-lbs / 25 N-m (Unverified - confirm in service manual)"}
+            ]
+        },
+        {
+            "id": "engine_under_cover_toyota_2gr",
+            "name": "Engine Under Cover",
+            "description": "Plastic splash shield under the engine. Some vehicles have an access panel for the oil filter.",
+            "category": "mechanical",
+            "imagePath": null,
+            "crossReferences": [],
+            "engines": ["toyota_2gr_fe"],
+            "specs": [
+                {"key": "Fasteners", "value": "Clips and 10mm bolts (varies by vehicle)"}
             ]
         }
     ]

@@ -13,13 +13,15 @@ are gone. What is left is work that needs the Unity Editor and a device, which n
 | Phase | Code | Remaining |
 |-------|------|-----------|
 | **0** Infrastructure | Done: ProjectSettings, `manifest.json`, glTFast loader, compile fixes | Open in Unity 2022.3 for the first time (no `.meta` files yet) and confirm zero errors |
-| **0.3** 3D model | A generated **stand-in** `gm_ls_gen4.glb` ships (`Tools/StandInModel/`), with nodes named to match `engine.json` | Source or build a real model |
+| **0.3** 3D model | Generated **stand-in** `.glb` files ship for each engine (`Tools/StandInModel/`), with nodes named to match `engine.json` | Source or build real models |
 | **1** Vertical slice | Scene builder (**MechanicScope > Setup Main Scene**) creates and wires the scene | Run the builder, commit the scene, and test the full flow on a phone (M1) |
-| **2** Tests / data layer | 84 real edit-mode tests, run headlessly by `./run_tests.sh` and in CI; both data layers kept (SQLite opt-in) | — |
-| **3** Features | Highlighting, progress resume and accessibility are wired; voice is deferred | Verify on device; add a second engine (M3) |
+| **2** Tests / data layer | 103 real edit-mode tests (data checks run per engine), run headlessly by `./run_tests.sh` and in CI; both data layers kept (SQLite opt-in) | — |
+| **3** Features | Highlighting, progress resume and accessibility are wired; voice is deferred | Verify on device |
 
 **Milestone status:** M0 is blocked only on a first Unity open. M1 needs a device run. M2 is met.
-M3 still needs a second engine, and voice on at least one platform (or a decision to defer it).
+M3's content bar is met in data: a second engine (Toyota 2GR-FE) with an oil change and spark plug
+procedure, whose specs still need checking against a service manual. M3 still needs voice on at
+least one platform (or a decision to defer it).
 
 ---
 

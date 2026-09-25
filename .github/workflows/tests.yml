@@ -22,7 +22,7 @@ jobs:
         run: ./run_tests.sh
 
   standin-model:
-    name: Stand-in model is up to date
+    name: Stand-in models are up to date
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +31,10 @@ jobs:
         with:
           python-version: "3.x"
 
-      # The generator also fails if engine.json maps a node the stand-in does not define.
-      - name: Regenerate stand-in GLB
+      # Regenerates every engine listed in STANDIN_ENGINES. It also fails if an engine.json maps
+      # a node its stand-in does not define.
+      - name: Regenerate stand-in GLBs
         run: python3 Tools/StandInModel/generate_standin_glb.py
 
-      - name: Fail if the committed GLB differs from the generator output
-        run: git diff --exit-code -- Assets/StreamingAssets/Engines/gm_ls_gen4/gm_ls_gen4.glb
+      - name: Fail if a committed GLB differs from the generator output
+        run: git diff --exit-code -- 'Assets/StreamingAssets/Engines/*.glb'

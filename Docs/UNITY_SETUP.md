@@ -39,8 +39,8 @@ Or use the included `Assets/Shaders/PartHighlight.shader` for the highlight mate
 
 ### 4. Add a Real 3D Engine Model
 
-The repo ships a generated **stand-in** `gm_ls_gen4.glb`: boxes and cylinders whose node names
-match `engine.json`. It is enough to test loading, alignment, tapping and highlighting, so you can
+Each bundled engine (`gm_ls_gen4`, `toyota_2gr_fe`) ships a generated **stand-in** `.glb`: boxes
+and cylinders whose node names match its `engine.json`. It is enough to test loading, alignment, tapping and highlighting, so you can
 skip this step for a first run. For real use, replace it with a real model in
 `Assets/StreamingAssets/Engines/gm_ls_gen4/`:
 
@@ -55,8 +55,9 @@ StreamingAssets/Engines/gm_ls_gen4/
 
 The model's node names must match the `partMappings[].nodeNameInModel` entries in `engine.json`. If your model uses different names, update `engine.json` accordingly. `./run_tests.sh` fails if any mapped node is missing from the `.glb`.
 
-When you replace the stand-in, delete the `standin-model` job from `.github/workflows/tests.yml`.
-Otherwise it regenerates the stand-in and fails on the difference.
+When you replace a stand-in, remove that engine from `STANDIN_ENGINES` in
+`Tools/StandInModel/generate_standin_glb.py`. Otherwise the generator, and the CI job that runs it,
+will overwrite your model with the stand-in.
 
 **Where to source a model:**
 - [Sketchfab](https://sketchfab.com/search?q=v8+engine&type=models) — search "V8 engine" or "LS engine"
