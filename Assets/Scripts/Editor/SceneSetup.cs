@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
@@ -18,6 +19,14 @@ namespace MechanicScope.Editor
         [MenuItem("MechanicScope/Setup Main Scene")]
         public static void CreateMainScene()
         {
+            List<string> problems = ProjectSetup.FindProblems();
+            if (problems.Count > 0)
+            {
+                Debug.LogWarning("[SceneSetup] The project is not fully configured for AR, so the scene will not " +
+                                 "work on a device until you run MechanicScope > Configure Project for AR:\n- " +
+                                 string.Join("\n- ", problems));
+            }
+
             // Create a new empty scene
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -43,6 +52,7 @@ namespace MechanicScope.Editor
 
             arCameraGO.AddComponent<UnityEngine.XR.ARFoundation.ARCameraManager>();
             arCameraGO.AddComponent<UnityEngine.XR.ARFoundation.ARCameraBackground>();
+            AddCameraPoseDriver(arCameraGO);
             arCameraGO.AddComponent<AudioListener>();
             arOrigin.camera = camera;
 
@@ -253,6 +263,33 @@ namespace MechanicScope.Editor
         }
 
         // === Helper Methods ===
+
+        /// <summary>
+        /// Moves the AR camera with the phone. Without a pose driver the camera feed still shows,
+        /// but the camera never moves, so the engine model stays fixed on screen instead of on the
+        /// engine. AR Foundation 5 uses the Input System's TrackedPoseDriver, reading the handheld
+        /// AR device (phones) with the XR HMD bindings as a fallback, as AR Foundation's own AR
+        /// camera does.
+        /// </summary>
+        private static void AddCameraPoseDriver(GameObject arCameraGO)
+        {
+            var poseDriver = arCameraGO.AddComponent<UnityEngine.InputSystem.XR.TrackedPoseDriver>();
+
+            var position = new UnityEngine.InputSystem.InputAction("Position",
+                UnityEngine.InputSystem.InputActionType.Value, expectedControlType: "Vector3");
+            position.AddBinding("<HandheldARInputDevice>/devicePosition");
+            position.AddBinding("<XRHMD>/centerEyePosition");
+
+            var rotation = new UnityEngine.InputSystem.InputAction("Rotation",
+                UnityEngine.InputSystem.InputActionType.Value, expectedControlType: "Quaternion");
+            rotation.AddBinding("<HandheldARInputDevice>/deviceRotation");
+            rotation.AddBinding("<XRHMD>/centerEyeRotation");
+
+            poseDriver.positionInput = new UnityEngine.InputSystem.InputActionProperty(position);
+            poseDriver.rotationInput = new UnityEngine.InputSystem.InputActionProperty(rotation);
+            poseDriver.trackingType = UnityEngine.InputSystem.XR.TrackedPoseDriver.TrackingType.RotationAndPosition;
+            poseDriver.updateType = UnityEngine.InputSystem.XR.TrackedPoseDriver.UpdateType.UpdateAndBeforeRender;
+        }
 
         private static void WireSerializedField(Component component, string fieldName, UnityEngine.Object value)
         {

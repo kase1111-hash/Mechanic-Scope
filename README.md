@@ -245,8 +245,11 @@ in AR".
 - [x] Scene builder (**MechanicScope > Setup Main Scene**) that creates and wires the main scene
 
 ### What Needs Work
-- [ ] **First run in Unity** — the project has never been opened, so there are no `.meta` files or
-      committed scene yet. See [`Docs/UNITY_SETUP.md`](Docs/UNITY_SETUP.md).
+- [ ] **First run in Unity** — the project has never been opened, so there are no `.meta` files,
+      render pipeline or XR settings, or committed scene yet. Run **MechanicScope > Configure
+      Project for AR**, then **MechanicScope > Setup Main Scene**; see
+      [`Docs/UNITY_SETUP.md`](Docs/UNITY_SETUP.md). The Editor scripts that do this have only been
+      syntax-checked, so the first open is also their first compile.
 - [ ] **On-device test** — the full flow (select engine → load model → align → run procedure →
       complete) has not been run on a phone.
 - [ ] **Real engine models** — the bundled `.glb` files are stand-ins; see [Engine Models](#engine-models).

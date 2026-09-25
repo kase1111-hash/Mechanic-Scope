@@ -15,18 +15,35 @@ Open the `/home/user/Mechanic-Scope` folder in Unity Hub. On first open, Unity w
 - Generate `.meta` files for all assets
 - Compile all scripts in `Assets/Scripts/`
 
-### 2. Build the Main Scene
+### 2. Configure the Project for AR
 
-The project includes an automated scene builder. After compilation:
+Go to menu: **MechanicScope > Configure Project for AR**. It is safe to run more than once, and it
+sets up what the camera feed and AR tracking need:
+
+- **Render pipeline:** creates `Assets/Settings/MechanicScope_URP.asset` and its renderer, adds
+  AR Foundation's **AR Background Renderer Feature** (without it the camera feed is black under
+  URP), and assigns the asset in Graphics and every Quality level
+- **XR Plug-in Management:** enables **ARCore** for Android and **ARKit** for iOS (creates
+  `Assets/XR/`). Without a loader the AR session never starts
+- **iOS Camera Usage Description**, if empty
+- **Android graphics API:** OpenGL ES 3 only (the ARCore plugin does not support Vulkan)
+
+It ends by logging anything still missing. **MechanicScope > Check AR Configuration** reports the
+same list at any time without changing anything. Commit the generated `Assets/Settings/` and
+`Assets/XR/` folders.
+
+### 3. Build the Main Scene
+
+The project includes an automated scene builder. After configuring:
 
 1. Go to menu: **MechanicScope > Setup Main Scene**
 2. This creates `Assets/Scenes/MainScene.unity` with:
-   - AR Session + AR Session Origin + AR Camera
+   - AR Session + AR Session Origin + AR Camera (with a Tracked Pose Driver so the camera follows the phone)
    - All manager GameObjects (AppInitializer, EngineModelLoader, ProcedureRunner, etc.)
    - UI Canvas with all 8 screen panels, header, and navigation wiring
    - All SerializeField references pre-wired between components
 
-### 3. Assign Materials
+### 4. Assign Materials
 
 After scene setup, two references need manual assignment on the **EngineModelLoader** component:
 
@@ -37,7 +54,7 @@ After scene setup, two references need manual assignment on the **EngineModelLoa
 
 Or use the included `Assets/Shaders/PartHighlight.shader` for the highlight material.
 
-### 4. Add a Real 3D Engine Model
+### 5. Add a Real 3D Engine Model
 
 Each bundled engine (`gm_ls_gen4`, `toyota_2gr_fe`) ships a generated **stand-in** `.glb`: boxes
 and cylinders whose node names match its `engine.json`. It is enough to test loading, alignment, tapping and highlighting, so you can
@@ -64,13 +81,6 @@ will overwrite your model with the stand-in.
 - [TurboSquid](https://www.turbosquid.com/) — search for engine models, export as GLB
 - Create one in Blender and export as `.glb`
 
-### 5. Configure XR
-
-Go to **Edit > Project Settings > XR Plug-in Management**:
-
-- **Android tab:** Enable **ARCore**
-- **iOS tab:** Enable **ARKit**
-
 ### 6. Build and Deploy
 
 **Android:**
@@ -81,7 +91,7 @@ Go to **Edit > Project Settings > XR Plug-in Management**:
 **iOS:**
 1. File > Build Settings > iOS > Switch Platform
 2. Player Settings > Other Settings:
-   - Camera Usage Description: "Required for AR engine overlay"
+   - Camera Usage Description: set by step 2 (and added to Info.plist at build time as a backstop)
    - Microphone and speech recognition usage descriptions are added automatically at build time
      (see `Docs/VOICE.md`)
    - Require ARKit support: checked
@@ -92,7 +102,7 @@ Go to **Edit > Project Settings > XR Plug-in Management**:
 ```
 Assets/
 ├── Scripts/
-│   ├── MechanicScope.asmdef        # Main assembly (references glTFast, AR Foundation)
+│   ├── MechanicScope.asmdef        # Main assembly (references glTFast, AR Foundation, TextMeshPro, UI)
 │   ├── Core/                        # AR, procedures, parts, progress, model loading
 │   ├── Data/                        # SQLite, repositories, data manager
 │   ├── UI/                          # Screen controllers and UI components
