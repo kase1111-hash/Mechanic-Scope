@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **MechanicScope > Configure Project for AR** and **Check AR Configuration** (Editor): create a
+  URP pipeline with AR Foundation's background renderer feature, enable ARCore/ARKit in XR
+  Plug-in Management, set the iOS camera usage description, and restrict Android to OpenGL ES 3.
+  The scene builder warns if any of this is missing.
+- The scene builder adds a Tracked Pose Driver to the AR camera, so the camera (and the engine
+  overlay) follows the phone.
 - **Voice commands, end to end** (untested on device; see `Docs/VOICE.md`):
   - Native plugins: `Assets/Plugins/iOS/MechanicScopeSpeech.mm` (Speech framework recognition and
     AVSpeechSynthesizer speech) and `Assets/Plugins/Android/MechanicScopeSpeech.java`
@@ -50,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the JSON store by default. See `Docs/SQLITE_SETUP.md`.
 
 ### Fixed
+- The project could not compile in Unity: 15 runtime scripts use `UnityEngine.UI`, which
+  `MechanicScope.asmdef` did not reference, and the Editor assembly referenced none of AR
+  Foundation, TextMeshPro or UI. (The headless harness compiles everything as one project, so it
+  could not see this.)
+- Removed an `XRSettings` block from `ProjectSettings.asset` that looked like ARCore/ARKit
+  configuration but is not read by Unity; the loaders were never enabled.
 - Voice commands matched substrings, so "unlock" triggered "lock" and any sentence containing
   "stop" stopped listening. Matching is now on whole words, ignoring case and punctuation.
 - The app could hear its own spoken replies as commands; results are now ignored while it speaks.

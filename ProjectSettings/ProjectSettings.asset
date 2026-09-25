@@ -121,6 +121,7 @@ PlayerSettings:
   tvOSManualSigningProvisioningProfileType: 0
   appleEnableAutomaticSigning: 0
   iOSRequireARKit: 1
+  cameraUsageDescription: Mechanic Scope uses the camera to overlay part names and repair steps on your engine.
   iOSAutomaticallyDetectAndAddCapabilities: 1
   appleEnableProMotion: 0
   shaderPrecisionModel: 0
@@ -229,11 +230,6 @@ PlayerSettings:
   autoRotationBehavior: 1
   useAnimatedAutorotation: 1
   GoogleARCoreEnabled: 1
-  XRSettings:
-    m_LoaderTypes:
-    - type: UnityEngine.XR.ARCore.ARCoreLoader
-    - type: UnityEngine.XR.ARKit.ARKitLoader
-    m_InitManagerOnStart: 1
   scriptingBackend:
     Android: 1
     iPhone: 1

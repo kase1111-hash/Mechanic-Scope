@@ -3,6 +3,7 @@
     "rootNamespace": "MechanicScope",
     "references": [
         "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
         "glTFast"

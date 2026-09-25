@@ -135,6 +135,9 @@ namespace MechanicScope.Editor
             string plistPath = Path.Combine(buildPath, "Info.plist");
             var plist = new PlistDocument();
             plist.ReadFromFile(plistPath);
+            // Normally set from Player Settings (ProjectSetup fills it in); kept here as a backstop
+            // because iOS terminates an app that opens the camera without it.
+            SetIfMissing(plist.root, "NSCameraUsageDescription", ProjectSetup.CameraUsage);
             SetIfMissing(plist.root, "NSMicrophoneUsageDescription", VoiceBuildSettings.MicrophoneUsage);
             SetIfMissing(plist.root, "NSSpeechRecognitionUsageDescription", VoiceBuildSettings.SpeechRecognitionUsage);
             plist.WriteToFile(plistPath);

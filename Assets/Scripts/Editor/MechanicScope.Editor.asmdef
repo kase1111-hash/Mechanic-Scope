@@ -2,7 +2,16 @@
     "name": "MechanicScope.Editor",
     "rootNamespace": "MechanicScope.Editor",
     "references": [
-        "MechanicScope"
+        "MechanicScope",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARSubsystems",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.XR.Management",
+        "Unity.XR.Management.Editor"
     ],
     "includePlatforms": [
         "Editor"

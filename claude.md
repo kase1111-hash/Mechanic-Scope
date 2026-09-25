@@ -76,6 +76,13 @@ See `Tools/HeadlessTests/README.md` for what the shim does and does not cover.
 - **Line length:** 120 characters max
 - **Documentation:** XML doc comments for public APIs
 
+## Assembly References
+
+Scripts compile into `MechanicScope.asmdef` (runtime) and `Editor/MechanicScope.Editor.asmdef`.
+Package assemblies are not visible unless listed in `references`, and the headless harness compiles
+everything as one project, so **it cannot catch a missing reference**. When a script starts using
+a new package namespace, add that package's assembly to the right `.asmdef`.
+
 ## Design Patterns
 
 - **Singleton:** `DataManager.Instance`, `AppInitializer`
@@ -162,7 +169,7 @@ Procedure file (`procedures/*.json`):
 | 3D model loading | Real, unexercised | Loads GLB via glTFast. Each engine ships a generated **stand-in** `.glb` (boxes named to match its `engine.json`); real models are still needed |
 | Voice commands | Implemented, untested on device | Whole-word command matching, push-to-talk/wake-word/always-listening, echo guard (20 headless tests). Native plugins in `Assets/Plugins/iOS` and `Assets/Plugins/Android`; the iOS `.mm` has never been compiled. See `Docs/VOICE.md` |
 | App initializer (AR systems) | Working | Waits up to 5 s for the ARSession to leave its initial state |
-| Unity project | **Never opened** | No `.meta` files or committed scene; run **MechanicScope > Setup Main Scene** on first open |
+| Unity project | **Never opened** | No `.meta` files, URP/XR settings or committed scene. On first open run **MechanicScope > Configure Project for AR** (URP + AR background feature, ARCore/ARKit loaders, camera usage string, GLES3 on Android), then **MechanicScope > Setup Main Scene** |
 
 The whole assembly is compile-checked on every `./run_tests.sh` run (and in CI), so this table
 describes runtime completeness, not build health. Nothing has been verified in the Editor or on a
